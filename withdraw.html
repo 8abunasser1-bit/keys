@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>سحب الكريبتو</title>
+    <style>
+        body { background-color: #0b0e11; color: #eaecef; font-family: -apple-system, sans-serif; margin: 0; padding: 0; }
+        .header { padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid #181a20; }
+        .back-btn { font-size: 1.5em; text-decoration: none; color: #eaecef; margin-left: 20px; }
+        .form-container { padding: 20px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 10px; color: #eaecef; font-size: 0.9em; }
+        .input-box { background-color: #181a20; border: 1px solid #2b3139; border-radius: 8px; padding: 15px; width: 100%; color: #eaecef; outline: none; box-sizing: border-box; }
+        .input-box:focus { border-color: #f0b90b; }
+        .network-options { display: flex; flex-direction: column; background-color: #181a20; border-radius: 8px; border: 1px solid #2b3139; overflow: hidden; margin-top:5px; display: none; }
+        .network-option { padding: 15px; font-size: 0.95em; cursor: pointer; border-bottom: 1px solid #2b3139; }
+        .network-option:hover { background-color: #2b3139; }
+        .network-option:last-child { border-bottom: none; }
+        .submit-btn { background-color: #f0b90b; color: #0b0e11; border: none; border-radius: 8px; padding: 15px; width: 100%; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .notes { background-color: rgba(240, 185, 11, 0.1); border: 1px solid rgba(240, 185, 11, 0.2); padding: 15px; border-radius: 8px; margin-top: 20px; color: #f0b90b; font-size: 0.85em; line-height: 1.6; }
+        .alert-success { background: rgba(14, 203, 129, 0.15); color: #0ecb81; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; border: 1px solid #0ecb81; }
+        .alert-error { background: rgba(255, 77, 79, 0.15); color: #ff4d4f; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; border: 1px solid #ff4d4f; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/withdraw_coin/" class="back-btn">→</a>
+        <h3 style="margin: 0; flex-grow: 1; text-align: center; padding-right: 20px;">سحب <span id="header-coin">USDT</span></h3>
+    </div>
+
+    <div class="form-container">
+        {% if success %}
+            <div class="alert-success">{{ success }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="input-group">
+                <label>العنوان</label>
+                <input type="text" name="wallet_address" class="input-box" placeholder="الرجاء إدخال عنوان السحب" required>
+            </div>
+
+            <div class="input-group">
+                <label>الشبكة</label>
+                <div id="network-selector" class="input-box" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+                    <span id="selected-network-text" style="color:#848e9c;">جاري تحميل الشبكات...</span>
+                    <span>▼</span>
+                </div>
+                <div class="network-options" id="network-list"></div>
+                <input type="hidden" name="network" id="hidden-network-input" required>
+            </div>
+
+            <div class="input-group">
+                <label>المبلغ</label>
+                <div style="position: relative;">
+                    <input type="number" name="amount" class="input-box" placeholder="الرجاء إدخال مبلغ السحب" step="any" required>
+                    <span style="position: absolute; left: 15px; top: 15px; color: #f0b90b; font-weight: bold;" id="input-coin">USDT</span>
+                </div>
+                <div style="margin-top: 8px; color: #848e9c; font-size: 0.85em;">
+                    متاح: <span style="color: #eaecef; font-weight: bold;">{{ balance|floatformat:2 }}</span> <span id="avail-coin">USDT</span>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">تأكيد السحب</button>
+        </form>
+
+        <div class="notes">
+            <b>إشعارات السحب:</b><br>
+            1. الحد الأدنى لمبلغ السحب هو 10 <span id="note-coin">USDT</span>.<br>
+            2. يرجى التأكد من مطابقة عنوان السحب مع الشبكة المختارة، وإلا ستفقد أصولك.<br>
+            3. ستتم مراجعة طلبك من قبل الإدارة قبل اكتمال التحويل.
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const selectedCoin = urlParams.get('coin') || 'USDT';
+            
+            document.getElementById('header-coin').innerText = selectedCoin;
+            document.getElementById('input-coin').innerText = selectedCoin;
+            document.getElementById('avail-coin').innerText = selectedCoin;
+            document.getElementById('note-coin').innerText = selectedCoin;
+
+            const selector = document.getElementById('network-selector');
+            const list = document.getElementById('network-list');
+            
+            // فتح وإغلاق قائمة الشبكات
+            selector.addEventListener('click', function() {
+                if (list.innerHTML.trim() !== '') {
+                    list.style.display = list.style.display === 'none' || list.style.display === '' ? 'flex' : 'none';
+                }
+            });
+
+            // اختيار الشبكة وإخفاء القائمة
+            window.selectNetwork = function(code, name) {
+                document.getElementById('hidden-network-input').value = code;
+                document.getElementById('selected-network-text').innerText = name;
+                document.getElementById('selected-network-text').style.color = '#eaecef';
+                list.style.display = 'none';
+            };
+
+            fetch('/api/currencies/')
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        let targetNetworks = [];
+
+                        for (const [key, info] of Object.entries(data.data)) {
+                            const base = key.split('_')[0];
+                            if (base === selectedCoin) {
+                                info.networks.forEach(net => {
+                                    let displayName = net.network_name || info.name;
+                                    if (key.includes('TRX') || displayName.includes('Tron')) displayName = 'Tron (TRC20)';
+                                    else if (key.includes('BSC') || displayName.includes('BNB') || key.includes('BEP20')) displayName = 'BNB Smart Chain (BEP20)';
+                                    else if (key.includes('ERC20') || displayName.includes('Ethereum')) displayName = 'Ethereum (ERC20)';
+                                    else if (selectedCoin === 'BTC') displayName = 'Bitcoin Network';
+                                    
+                                    targetNetworks.push({ code: net.code, name: displayName });
+                                });
+                            }
+                        }
+
+                        if (targetNetworks.length > 0) {
+                            targetNetworks.sort((a, b) => {
+                                const getPrio = name => {
+                                    let n = name.toLowerCase();
+                                    if(n.includes('trc20')) return 1;
+                                    if(n.includes('bep20')) return 2;
+                                    return 3;
+                                };
+                                return getPrio(a.name) - getPrio(b.name);
+                            });
+
+                            document.getElementById('selected-network-text').innerText = 'يرجى اختيار شبكة السحب';
+                            
+                            let html = '';
+                            targetNetworks.forEach((net, index) => {
+                                let fastLabel = index === 0 ? ' (الأسرع)' : '';
+                                html += `
+                                <div class="network-option" onclick="selectNetwork('${net.code}', '${net.name}${fastLabel}')">
+                                    ${net.name} <span style="color:#f0b90b; font-size:0.85em;">${fastLabel}</span>
+                                </div>
+                                `;
+                            });
+                            list.innerHTML = html;
+                        } else {
+                            document.getElementById('selected-network-text').innerText = 'لا توجد شبكات متاحة';
+                            document.getElementById('selected-network-text').style.color = '#ff4d4f';
+                        }
+                    }
+                });
+        });
+    </script>
+</body>
+</html>

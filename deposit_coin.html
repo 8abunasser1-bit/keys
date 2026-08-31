@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إيداع الكريبتو</title>
+    <style>
+        body { background-color: #0b0e11; color: #eaecef; font-family: -apple-system, sans-serif; margin: 0; padding: 0; }
+        .header { padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid #181a20; }
+        .back-btn { font-size: 1.5em; text-decoration: none; color: #eaecef; margin-left: 20px; }
+        .search-bar { background-color: #181a20; border-radius: 20px; padding: 10px 15px; margin: 20px; display: flex; align-items: center; }
+        .search-bar input { background: transparent; border: none; color: #eaecef; width: 100%; outline: none; margin-right: 10px; }
+        .section-title { color: #848e9c; font-size: 0.85em; margin: 0 20px 10px; }
+        .coin-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; text-decoration: none; color: #eaecef; border-bottom: 1px solid #181a20; }
+        .coin-item:hover { background-color: #181a20; }
+        .coin-info { display: flex; align-items: center; gap: 15px; }
+        .coin-icon { width: 30px; height: 30px; background-color: #2b3139; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
+        .coin-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .coin-name { font-weight: bold; }
+        .coin-desc { color: #848e9c; font-size: 0.8em; margin-top: 2px;}
+        .apr-badge { background-color: rgba(43, 49, 57, 0.5); color: #4474ff; padding: 3px 8px; border-radius: 5px; font-size: 0.75em; border: 1px solid #4474ff; margin-right: 5px;}
+        .loading { text-align: center; color: #848e9c; padding: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/wallet/" class="back-btn">→</a>
+        <h3 style="margin: 0; flex-grow: 1; text-align: center; padding-right: 20px;">اختيار الكريبتو</h3>
+    </div>
+    
+    <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" placeholder="بحث" id="searchInput">
+    </div>
+    
+    <div class="section-title">العملات المتاحة</div>
+    
+    <div id="coin-list">
+        <div class="loading">جاري جلب العملات...</div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch('/api/currencies/')
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        const coinList = document.getElementById('coin-list');
+                        coinList.innerHTML = ''; 
+                        
+                        const currencies = data.data;
+                        const realGrouped = {};
+                        
+                        // الفلترة: تجميع كل الشبكات (USDT_TRX, USDT_BSC) تحت عملة رسمية واحدة (USDT)
+                        for (const [key, info] of Object.entries(currencies)) {
+                            const base = key.split('_')[0]; // هذا السطر يفصل اسم العملة عن الشبكة
+                            
+                            if (!realGrouped[base]) {
+                                let baseName = info.name;
+                                // تنظيف أسماء العملات لتكون رسمية (بدون اسم الشبكة)
+                                if (base === 'USDT') baseName = 'Tether';
+                                if (base === 'USDC') baseName = 'USD Coin';
+                                if (base === 'BTT') baseName = 'BitTorrent';
+                                
+                                realGrouped[base] = {
+                                    icon: info.icon,
+                                    name: baseName
+                                };
+                            }
+                        }
+                        
+                        // ترتيب القائمة (الأهم فوق)
+                        const topCoins = ['USDT', 'BTC', 'ETH', 'BNB', 'TRX', 'USDC'];
+                        
+                        const sortedCoins = Object.entries(realGrouped).sort((a, b) => {
+                            let idxA = topCoins.indexOf(a[0]);
+                            let idxB = topCoins.indexOf(b[0]);
+                            if (idxA === -1) idxA = 999;
+                            if (idxB === -1) idxB = 999;
+                            if (idxA !== idxB) return idxA - idxB;
+                            return a[0].localeCompare(b[0]);
+                        });
+
+                        let allCoinsHtml = '';
+                        for (const [base, info] of sortedCoins) {
+                            let iconHtml = info.icon ? `<img src="${info.icon}" alt="${base}">` : `<div style="color: #fff;">${base.charAt(0)}</div>`;
+                            
+                            // إضافة شعار الـ APR للعملات اللي نبيها
+                            let aprHtml = '';
+                            if (base === 'USDT') aprHtml = `<span class="apr-badge">حتى 12% APR ></span>`;
+                            else if (base === 'BTC') aprHtml = `<span class="apr-badge">حتى 8% APR ></span>`;
+
+                            // الرابط يحول لصفحة الشبكات ويرسل معاها اسم العملة الأم (مثلا coin=USDT)
+                            allCoinsHtml += `
+                            <a href="/deposit/network/?coin=${base}" class="coin-item" data-search="${base.toLowerCase()} ${info.name.toLowerCase()}">
+                                <div class="coin-info">
+                                    <div class="coin-icon">${iconHtml}</div>
+                                    <div>
+                                        <div class="coin-name">${base} ${aprHtml}</div>
+                                        <div class="coin-desc">${info.name}</div>
+                                    </div>
+                                </div>
+                            </a>
+                            `;
+                        }
+                        coinList.innerHTML = allCoinsHtml;
+
+                        // تفعيل شريط البحث
+                        document.getElementById('searchInput').addEventListener('input', function(e) {
+                            const term = e.target.value.toLowerCase();
+                            const items = document.querySelectorAll('.coin-item');
+                            items.forEach(item => {
+                                if(item.getAttribute('data-search').includes(term)) {
+                                    item.style.display = 'flex';
+                                } else {
+                                    item.style.display = 'none';
+                                }
+                            });
+                        });
+
+                    } else {
+                        document.getElementById('coin-list').innerHTML = `<div class="loading" style="color: #ff4d4f;">خطأ: ${data.error}</div>`;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('coin-list').innerHTML = `<div class="loading" style="color: #ff4d4f;">فشل الاتصال بالخادم</div>`;
+                });
+        });
+    </script>
+</body>
+</html>

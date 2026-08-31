@@ -1,0 +1,300 @@
+from decimal import Decimal
+from .models import UserBalance, WithdrawalRequest, DepositTransaction, DepositAddress, FeeTask, FuturesTrade
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+import json
+import requests
+from django.http import JsonResponse
+import random
+from django.views.decorators.csrf import csrf_exempt
+import time
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'login.html', {'form': form})
+
+@login_required(login_url='login')
+def dashboard(request):
+    balance = 0
+    if request.user.is_authenticated:
+        user_bal, _ = UserBalance.objects.get_or_create(user=request.user, defaults={'balance': 0})
+        balance = user_bal.balance
+    return render(request, 'dashboard.html', {'balance': balance})
+
+def wallet_view(request):
+    if request.user.is_authenticated:
+        user_bal, _ = UserBalance.objects.get_or_create(user=request.user, defaults={'balance': 0})
+        balance = user_bal.balance
+    else:
+        balance = 0
+    return render(request, 'wallet.html', {'balance': balance})
+
+def withdraw_view(request):
+    user_bal, _ = UserBalance.objects.get_or_create(user=request.user, defaults={'balance': 0})
+
+    if request.method == 'POST':
+        wallet_address = request.POST.get('wallet_address')
+        network = request.POST.get('network')
+        amount_str = request.POST.get('amount')
+
+        try:
+            amount = Decimal(amount_str)
+            if amount <= 0:
+                raise ValueError("المبلغ غير صحيح")
+
+            if amount > user_bal.balance:
+                return render(request, 'withdraw.html', {'balance': user_bal.balance, 'error': 'عذراً، رصيدك المتاح لا يكفي.'})
+
+            new_req = WithdrawalRequest.objects.create(
+                user=request.user,
+                amount=amount,
+                coin=network,
+                wallet_address=wallet_address,
+                status='pending'
+            )
+            return redirect(f'/withdrawal_detail/{new_req.pk}/')
+        except Exception as e:
+            return render(request, 'withdraw.html', {'balance': user_bal.balance, 'error': f'خطأ:لإتمام الطلب - {str(e)}'})
+
+    return render(request, 'withdraw.html', {'balance': user_bal.balance})
+
+def withdrawal_status_view(request, req_id):
+    req = WithdrawalRequest.objects.get(id=req_id, user=request.user)
+    return render(request, 'withdrawal_status.html', {'req': req})
+
+@login_required(login_url='login')
+def deposit_coin_view(request):
+    return render(request, 'deposit_coin.html')
+
+@login_required(login_url='login')
+def deposit_network_view(request):
+    coin = request.GET.get('coin', 'USDT')
+    return render(request, 'deposit_network.html', {'coin': coin})
+
+@login_required(login_url='login')
+def deposit_address_view(request):
+    coin = request.GET.get('coin', 'USDT')
+    network = request.GET.get('network', 'TRC20')
+
+    if network == 'TRC20':
+        address = "TZH9iTSxzHExdtDkhvNKcLn5xXcbWoPD9B"
+    elif network == 'BEP20':
+        address = "0xaefd70bdae8d2f6c2b2ed55877ca4fc1972bb410"
+    else:
+        address = "0x..."
+
+    qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={address}&bgcolor=0b0e11&color=eaecef"
+    context = {
+شبقذ        'coin': coin,
+        'network': network,
+        'address': address,
+        'qr_code_url': qr_code_url
+    }
+    return render(request, 'deposit_address.html', context)
+
+def generate_deposit_address(request):
+    PLISIO_API_KEY = "pjL1XJx32FSYckRSzB2TfgQgim6r8P1ntVatIad5coz86E9_CpI7wocfQcXvgUyY"
+    coin = request.GET.get('coin', 'USDT_TRX')
+    amount = request.GET.get('amount', '100')
+    order_num = random.randint(100000, 999999)
+
+    url = "https://api.plisio.net/api/v1/invoices/new"
+    params = {
+        'source_currency': 'USD',
+        'source_amount': amount,
+        'order_name': 'Wujood Investment Deposit',
+        'order_number': f'DEP_{order_num}',
+        'currency': coin,
+        'api_key': PLISIO_API_KEY
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        if data.get('status') == 'success':
+            invoice = data['data']
+            return JsonResponse({
+                'success': True,
+                'address': invoice['wallet_hash'],
+                'qr_code': invoice['qr_code'],
+                'expected_amount': invoice.get('invoice_amount', '0')
+            })
+        else:
+            return JsonResponse({'success': False, 'error': 'فشل توليد العنوان من بوابة الدفع.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def get_supported_currencies(request):
+    url = "https://api.plisio.net/api/v1/currencies"
+    PLISIO_API_KEY = "pjL1XJx32FSYckRSzB2TfgQgim6r8P1ntVatIad5coz86E9_CpI7wocfQcXvgUyY"
+    try:
+        res = requests.get(url, params={'api_key': PLISIO_API_KEY})
+        data = res.json()
+        if data.get('status') == 'success':
+            grouped = {}
+            for item in data['data']:
+                base = item['currency']
+                if base not in grouped:
+                    grouped[base] = {
+                        'name': item['name'],
+                        'icon': item['icon'],
+                        'networks': []
+                    }
+                grouped[base]['networks'].append({
+                    'code': item['cid'],
+                    'network_name': item.get('network', item.get('name', '')),
+                    'network_icon': item.get('icon', '')
+                })
+            return JsonResponse({'success': True, 'data': grouped})
+        else:
+            error_msg = data.get('data', 'رفضت البوابة الطلب')
+            if isinstance(error_msg, dict) and 'message' in error_msg:
+                error_msg = error_msg['message']
+            return JsonResponse({'success': False, 'error': str(error_msg)})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f"مشكلة في الاتصال: {str(e)}"})
+
+def get_deposit_address(request):
+    coin = request.GET.get('coin')
+    if request.user.is_authenticated:
+        current_user = request.user
+    else:
+        current_user, _ = User.objects.get_or_create(username='test_investor')
+
+    existing = DepositAddress.objects.filter(user=current_user, coin=coin).first()
+    if existing:
+        return JsonResponse({"success": True, "address": existing.address})
+
+    api_key = "pjL1XJx32FSYckRSzB2TfgQgim6r8P1ntVatIad5coz86E9_CpI7wocfQcXvgUyY"
+    unique_id = int(time.time())
+    url = f"https://api.plisio.net/api/v1/invoices/new?source_currency=USD&source_amount=100&order_number=Dep_{current_user.id}_{coin}_{unique_id}&order_name=Deposit&currency={coin}&api_key={api_key}"
+
+    try:
+        res = requests.get(url).json()
+        if res.get('status') in ['success', 'pending', 'new']:
+            wallet_hash = res['data'].get('wallet_hash')
+            if wallet_hash:
+                DepositAddress.objects.create(user=current_user, coin=coin, address=wallet_hash)
+                return JsonResponse({"success": True, "address": wallet_hash})
+
+        print("❌ Plisio API Error:", res)
+        error_msg = res.get('data', {}).get('message', 'تأكد من إعدادات Plisio أو مفتاح الـ API')
+        return JsonResponse({"success": False, "error": error_msg})
+    except Exception as e:
+        print("❌ Python Error:", str(e))
+        return JsonResponse({"success": False, "error": "خطأ داخلي"})
+
+@csrf_exempt
+def plisio_webhook(request):
+    if request.method == 'POST':
+        try:
+            data = request.POST if request.POST else json.loads(request.body)
+            status = data.get('status')
+            order_number = data.get('order_number', '')
+            amount = data.get('amount', '0')
+            tx_id = data.get('tx_url', data.get('tx_id', 'unknown'))
+            coin = data.get('currency', 'Unknown')
+
+            print(f"\n🔔 إشعار جديد من البوابة: {order_number} - الحالة: {status}")
+
+            if status in ['completed', 'mismatch']:
+                parts = order_number.split('_')
+                if len(parts) >= 2:
+                    user_id = parts[1]
+                    user = User.objects.filter(id=user_id).first()
+                    if user:
+                        transaction, created = DepositTransaction.objects.get_or_create(
+                            tx_id=tx_id,
+                            defaults={
+                                'user': user,
+                                'coin': coin,
+                                'amount': amount,
+                                'status': status
+                            }
+                        )
+                        if created:
+                            print(f"✅ تم تأكيد إيداع بقيمة {amount} {coin} للمستثمر {user.username}!")
+
+                            # الكود الذكي لتحديث مهام الرسوم
+                            if order_number.startswith('FEE_'):
+                                task = FeeTask.objects.filter(user=user, is_paid=False).first()
+                                if task:
+                                    task.is_paid = True
+                                    task.save()
+                                    wallet, _ = UserBalance.objects.get_or_create(user=user)
+                                    wallet.balance += Decimal(amount)
+                                    wallet.save()
+                                    print(f"🎉 تم تسديد رسوم التحقيق بنجاح وإضافة الرصيد للمحفظة!")
+
+            return JsonResponse({"status": "ok"})
+        except Exception as e:
+            print("❌ Webhook Error:", str(e))
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    return JsonResponse({"status": "invalid_method"})
+
+def withdraw_coin(request):
+    return render(request, 'withdraw_coin.html')
+
+def register(request):
+    if request.method == 'POST':
+        username = request.POST.get('username') or request.POST.get('name') or request.POST.get('user')
+        email = request.POST.get('email') or request.POST.get('mail') or ''
+        password = request.POST.get('password') or request.POST.get('pass')
+
+        if not username or not password:
+            return render(request, 'register.html', {'error': 'الرجاء إدخال اسم المستخدم وكلمة المرور.'})
+
+        if User.objects.filter(username=username).exists():
+            return render(request, 'register.html', {'error': 'عفواً، اسم المستثمر هذا مستخدم مسبقاً، اختر اسماً آخر.'})
+
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            login(request, user)
+            return redirect('/dashboard/')
+        except Exception as e:
+            return render(request, 'register.html', {'error': f'حدث خطأ أثناء التسجيل: {str(e)}'})
+
+    return render(request, 'register.html')
+
+def withdrawal_detail(request, pk):
+    if not request.user.is_authenticated:
+        return redirect('/register/')
+
+    req = get_object_or_404(WithdrawalRequest, pk=pk, user=request.user)
+    return render(request, 'withdrawal_detail.html', {'req': req})
+
+# ==========================================
+# إضافة دوال صفحة رسوم التحقيق (Fee Tasks)
+# ==========================================
+@login_required(login_url='login')
+def fee_task_view(request):
+    # التعديل هنا: نجلب جميع المهام (السلسلة كاملة) الخاصة بالمستثمر مرتبة من الأقدم للأحدث
+    tasks = FeeTask.objects.filter(user=request.user).order_by('created_at')
+    return render(request, 'fee_task.html', {'tasks': tasks})
+
+# ==========================================
+# دالة العقود الآجلة (Futures Trade)
+# ==========================================
+@login_required(login_url='login')
+def futures_trade_view(request):
+    # جلب رصيد المستثمر لعرضه في واجهة التداول
+    user_bal, _ = UserBalance.objects.get_or_create(user=request.user, defaults={'balance': 0})
+    
+    # جلب صفقات العقود المفتوحة الخاصة بالمستثمر
+    open_trades = FuturesTrade.objects.filter(user=request.user, status='open').order_by('-created_at')
+    
+    context = {
+        'balance': user_bal.balance,
+        'open_trades': open_trades
+    }
+    return render(request, 'futures.html', context)

@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+   <title>العقود الآجلة - MEXC Ultra Pro</title>
+   <style>
+       * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+       body { margin: 0; padding: 0; background-color: #0b0e11; color: #b7bdc6; padding-bottom: 70px; overflow-x: hidden; font-size: 13px; user-select: none; }
+       
+       /* القائمة العلوية */
+       .top-nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background-color: #1e2329; border-bottom: 1px solid #2b3139; overflow-x: auto; white-space: nowrap; }
+       .top-nav::-webkit-scrollbar { display: none; }
+       .nav-links { display: flex; gap: 15px; font-weight: 500; font-size: 14px; }
+       .nav-links span { cursor: pointer; color: #848e9c; transition: 0.2s; }
+       .nav-links .active { color: #fcd535; font-weight: bold; position: relative; }
+       .nav-links .active::after { content: ''; position: absolute; bottom: -12px; left: 0; right: 0; height: 2px; background-color: #fcd535; }
+       .nav-icons { display: flex; gap: 15px; color: #ffffff; font-size: 18px; align-items: center; cursor: pointer; }
+       
+       /* رأس الزوج */
+       .pair-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background-color: #0b0e11; border-bottom: 1px solid #1e2329;}
+       .pair-right { display: flex; align-items: center; gap: 10px; }
+       .back-icon { font-size: 18px; color: #848e9c; cursor: pointer; margin-left: 5px; }
+       .pair-title { font-size: 22px; font-weight: 800; color: #eaecef; display: flex; align-items: center; gap: 8px; direction: ltr; cursor: pointer; }
+       .pair-badge { font-size: 10px; background-color: #2b3139; padding: 3px 6px; border-radius: 4px; color: #fcd535; font-weight: bold; }
+       .pair-left { display: flex; gap: 15px; font-size: 18px; color: #848e9c; }
+       
+       /* الحاوية الرئيسية */
+       .trading-container { display: flex; padding: 10px 15px; gap: 15px; }
+       .order-form { width: 55%; display: flex; flex-direction: column; gap: 8px; }
+       
+       .margin-leverage { display: flex; gap: 8px; }
+       .ml-btn { flex: 1; background-color: #2b3139; text-align: center; padding: 6px 0; border-radius: 4px; font-size: 12px; font-weight: bold; color: #eaecef; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 4px;}
+       .balance-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #848e9c; padding: 4px 0; }
+       .balance-row .val { color: #eaecef; font-weight: bold; direction: ltr;}
+       
+       .input-group { display: flex; justify-content: space-between; align-items: center; background-color: #1e2329; border-radius: 4px; padding: 0 10px; height: 38px; cursor: pointer; border: 1px solid transparent; transition: 0.2s;}
+       .input-group:focus-within { border-color: #fcd535; }
+       .input-group.disabled { background-color: #12161b; opacity: 0.7; }
+       .input-group span { color: #848e9c; font-size: 18px; font-weight: bold; cursor: pointer; user-select: none;}
+       .input-group input { background: transparent; border: none; color: #eaecef; text-align: center; font-size: 14px; width: 60%; outline: none; font-weight: bold; direction: ltr; pointer-events: auto;}
+       
+       .slider-container { display: flex; align-items: center; margin-top: 8px; margin-bottom: 4px; position: relative; width: 100%; height: 20px;}
+       .custom-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #2b3139; outline: none; z-index: 2; position: absolute; margin: 0; border-radius: 2px;}
+       .custom-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #fcd535; border-radius: 50%; cursor: pointer; border: 4px solid #1e2329; }
+       
+       .options-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; font-size: 11px; color: #848e9c; }
+       
+       .order-info { font-size: 11px; color: #848e9c; display: flex; justify-content: space-between; margin-top: 2px; }
+       .order-info .val { color: #eaecef; font-weight: bold; direction: ltr;}
+       
+       .btn-long { width: 100%; background-color: #02c076; color: white; border: none; padding: 10px 0; border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 4px; transition: 0.2s;}
+       .btn-long:active { background-color: #029b5e; }
+       .btn-short { width: 100%; background-color: #f23645; color: white; border: none; padding: 10px 0; border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 4px; transition: 0.2s;}
+       .btn-short:active { background-color: #c92a38; }
+
+
+       .order-book { width: 45%; display: flex; flex-direction: column; font-size: 11px; }
+       .ob-header { display: flex; justify-content: space-between; color: #848e9c; font-size: 11px; margin-bottom: 8px; }
+       .ob-cols { display: flex; justify-content: space-between; color: #848e9c; margin-bottom: 6px; font-size: 10px;}
+       .ob-row { display: flex; justify-content: space-between; position: relative; padding: 3px 0; margin-bottom: 1px; cursor: pointer;}
+       .ob-bg { position: absolute; right: 0; top: 0; height: 100%; opacity: 0.15; z-index: 0; transition: width 0.1s linear;}
+       .ob-bg.red { background-color: #f23645; }
+       .ob-bg.green { background-color: #02c076; }
+       .ob-text { position: relative; z-index: 1; display: flex; justify-content: space-between; width: 100%; direction: ltr; padding: 0 4px;}
+       .ob-price { font-weight: 600; font-family: 'Roboto', monospace; font-size: 12px;}
+       .ob-price.red { color: #f23645; }
+       .ob-price.green { color: #02c076; }
+       .ob-amount { color: #eaecef; font-family: 'Roboto', monospace; font-size: 11px;}
+       .ob-current { padding: 8px 0; display: flex; flex-direction: column; align-items: flex-start; direction: ltr; border-top: 1px solid #1e2329; border-bottom: 1px solid #1e2329; margin: 4px 0;}
+       .ob-current-price { font-size: 20px; font-weight: bold; color: #02c076; display: flex; align-items: center; gap: 4px; transition: color 0.2s;}
+       .ob-current-price.down { color: #f23645; }
+       
+       .ratio-container { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+       .precision-dropdown { background: #1e2329; padding: 4px 8px; border-radius: 4px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; color: #eaecef; margin-top: 4px; cursor: pointer;}
+       
+       /* قسم الصفقات */
+       .positions-section { margin-top: 10px; background: #0b0e11;}
+       .pos-tabs-container { display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 1px solid #1e2329; border-top: 8px solid #000000; }
+       .pos-tabs { display: flex; gap: 20px; }
+       .pos-tab { padding: 12px 0; font-size: 14px; font-weight: bold; color: #848e9c; cursor: pointer; transition: 0.2s;}
+       .pos-tab.active { color: #eaecef; border-bottom: 2px solid #fcd535; }
+       .cancel-all { color: #eaecef; font-size: 12px; background: #2b3139; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+       
+       .pos-card { background: #12161b; border-radius: 8px; padding: 15px; margin: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid #2b3139;}
+       .pos-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
+       .pos-badge { font-weight: bold; font-size: 12px; padding: 4px 8px; border-radius: 4px; }
+       .pos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 11px; color: #848e9c; text-align: right; }
+       .pos-grid .val { color: #eaecef; font-weight: bold; direction: ltr; font-size: 13px; margin-top: 4px; display: block;}
+       
+       .empty-state { text-align: center; padding: 50px 20px; }
+
+
+       .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: #1e2329; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2b3139; z-index: 100; }
+       .nav-item { display: flex; flex-direction: column; align-items: center; color: #848e9c; font-size: 11px; gap: 4px; text-decoration: none; font-weight: 500;}
+       .nav-item.active { color: #eaecef; }
+
+
+       .pct-btn { background: #2b3139; color: #848e9c; border: 1px solid #2b3139; border-radius: 4px; padding: 6px 0; flex: 1; font-weight: bold; cursor: pointer; transition: 0.2s; }
+       .pct-btn.active { background: rgba(252, 213, 53, 0.1); color: #fcd535; border: 1px solid #fcd535; }
+       
+       /* عناصر قائمة البحث عن العملات */
+       .coin-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #1e2329; cursor: pointer; }
+       .coin-item:hover { background: rgba(255,255,255,0.05); }
+
+
+       /* واجهة المخطط */
+       #chart-view { display: none; background-color: #12161b; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 200; overflow-y: auto; padding-bottom: 80px;}
+       .cv-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: none;}
+       .cv-header-right { font-size: 20px; color: #848e9c; cursor: pointer; }
+       .cv-header-center { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; color: #eaecef; direction: ltr;}
+       .cv-header-left { display: flex; gap: 18px; font-size: 18px; color: #848e9c; }
+       .cv-tabs { display: flex; gap: 20px; padding: 0 15px; border-bottom: 1px solid #1e2329; color: #848e9c; font-size: 15px; }
+       .cv-tabs span { padding: 12px 0; cursor: pointer;}
+       .cv-tabs .active { color: #fcd535; font-weight: bold; position: relative; border-bottom: 2px solid #fcd535;}
+       .cv-stats { display: flex; justify-content: space-between; padding: 15px; background: #12161b; }
+       .cv-stats-right { display: flex; flex-direction: column; align-items: flex-start; }
+       .cv-grid { display: grid; grid-template-columns: auto auto; gap: 10px 20px; font-size: 11px; color: #848e9c; }
+       .cv-grid span.lbl { color: #848e9c; text-align: right; }
+       .cv-grid span.val { color: #eaecef; font-weight: bold; text-align: left; direction: ltr;}
+       .cv-price-box { display: flex; flex-direction: column; align-items: flex-start; direction: ltr; }
+       .cv-price-main { font-size: 36px; font-weight: bold; color: #f23645; display: flex; align-items: baseline; gap: 5px; }
+       .cv-price-main.up { color: #02c076; }
+       .cv-price-vol { font-size: 13px; color: #eaecef; font-weight: normal; }
+       .cv-price-sub { font-size: 13px; color: #848e9c; margin-top: 4px; }
+       .cv-lev-badge { border: 1px solid #fcd535; color: #fcd535; font-size: 11px; padding: 2px 20px; border-radius: 4px; display: inline-block; text-align: center; margin-top: 8px; width: 100%; font-weight: bold;}
+       .cv-timeframes { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid #1e2329; background: #12161b;}
+       .cv-tf-right { display: flex; align-items: center; gap: 14px; color: #848e9c; font-size: 13px; font-weight: bold;}
+       .cv-tf-right span { padding: 4px 6px; border-radius: 4px; cursor: pointer; transition: 0.2s;}
+       .cv-tf-right .active { background: #2b3139; color: #eaecef; }
+       .cv-tf-left { color: #848e9c; font-size: 20px; }
+       .more-dropdown { display: none; position: absolute; top: 35px; right: 0; background-color: #1e2329; min-width: 90px; border: 1px solid #2b3139; border-radius: 6px; box-shadow: 0px 8px 16px rgba(0,0,0,0.8); z-index: 10000; flex-direction: column; overflow: hidden;}
+       .more-dropdown div { padding: 10px; color: #eaecef; text-align: center; cursor: pointer; border-bottom: 1px solid #12161b; font-size: 13px;}
+       .more-dropdown div:hover { background-color: #2b3139; color: #fcd535; font-weight: bold;}
+       .more-dropdown div:last-child { border-bottom: none; }
+       .cv-indicators { display: flex; gap: 20px; padding: 12px 15px; color: #848e9c; font-size: 12px; font-weight: bold; border-top: 1px solid #1e2329; background: #12161b; overflow-x: auto; }
+       .cv-bottom { display: flex; gap: 10px; padding: 15px; background: #1e2329; position: fixed; bottom: 0; left: 0; right: 0; z-index: 201; border-top: 1px solid #2b3139;}
+       .cv-btn-long { flex: 1; background: #02c076; color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;}
+       .cv-btn-long:active { background: #029b5e; }
+       .cv-btn-short { flex: 1; background: #f23645; color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;}
+       .cv-btn-short:active { background: #c92a38; }
+   </style>
+</head>
+<body>
+   <div id="trade-view">
+       <div class="top-nav">
+           <div class="nav-links">
+               <span class="active">USDT-M</span>
+               <span>COIN-M</span>
+           </div>
+           <div class="nav-icons">
+               <span onclick="showSearchModal()">🔍</span>
+               <span>•••</span>
+           </div>
+       </div>
+       
+       <div class="pair-header">
+           <div class="pair-right">
+               <span class="back-icon" onclick="window.location.href='/dashboard/'">←</span>
+           </div>
+           <div class="pair-title">
+               <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                   <div style="display:flex; align-items:center; gap:8px;" onclick="showSearchModal()">
+                       <span class="pair-badge">دائم</span> 
+                       <span class="dyn-coin">BTCUSDT</span> 
+                       <span style="font-size: 18px; color: #848e9c;">☰</span>
+                   </div>
+                   <span id="header-price-usdt" style="font-size: 13px; color: #02c076; margin-top: 4px; font-weight: bold;">-- USDT</span>
+               </div>
+           </div>
+           <div class="pair-left">
+               <div onclick="toggleView('chart')" style="cursor: pointer; display: flex; align-items: center; gap: 6px; background: #1e2329; padding: 6px 12px; border-radius: 6px; border: 1px solid #2b3139;">
+                   <span style="font-size: 18px;">📈</span>
+                   <span style="color: #fcd535; font-size: 13px; font-weight: bold;">الشموع</span>
+               </div>
+           </div>
+       </div>
+       
+       <div class="trading-container">
+           <div class="order-form">
+               <div class="margin-leverage">
+                   <div class="ml-btn" id="margin-btn" onclick="showMarginModal()">معزول ▾</div>
+                   <div class="ml-btn" id="lev-btn" onclick="showLeverageModal()">200X ▾</div>
+               </div>
+               
+               <div class="balance-row">
+                   <span onclick="showTransferModal()" style="cursor:pointer; color:#eaecef; display:flex; align-items:center; gap:4px; font-weight:normal;">المتاح <span style="font-size:16px; color:#848e9c;">⇆</span></span>
+                   <span class="val" id="avail-balance">10500.00 USDT</span>
+               </div>
+               
+               <div class="input-group" onclick="showOrderTypeModal()">
+                   <input type="text" id="order-type-input" value="السوق ▾" readonly style="width: 100%; pointer-events: none; color: #fcd535; cursor: pointer; background: transparent; border: none; font-weight: bold;">
+               </div>
+               
+               <div class="input-group disabled" style="display: flex; justify-content: space-between; background-color: #12161b;">
+                   <input type="text" id="calc-coin-amount" placeholder="الحجم المتوقع" readonly style="width: 70%; pointer-events: none; color: #eaecef;">
+                   <span style="font-size: 12px; color: #848e9c; padding: 0 5px;"><span class="dyn-base">BTC</span></span>
+               </div>
+               
+               <div class="input-group" style="background-color: #1e2329;">
+                   <span onclick="adjustAmount(-10)" style="padding:0 8px;">-</span>
+                   <input type="number" id="order-amount" placeholder="المبلغ (الهامش)" oninput="updateMargin()" style="flex:1;">
+                   <span style="font-size: 12px; color: #eaecef; padding: 0 5px;">USDT</span>
+                   <span onclick="adjustAmount(10)" style="padding:0 8px;">+</span>
+               </div>
+               
+               <div class="slider-container">
+                   <input type="range" min="0" max="100" value="0" class="custom-slider" id="amount-slider" oninput="sliderUpdate()">
+               </div>
+               <div id="slider-usdt-display" style="text-align: right; font-size: 11px; color: #fcd535; font-weight: bold; margin-bottom: 8px;">USDT (0%) 0.00</div>
+               
+               <div class="options-row">
+                   <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" style="accent-color: #fcd535;"> تقليل فقط</label>
+                   <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" style="accent-color: #fcd535;"> TP/SL</label>
+               </div>
+               
+               <div class="order-info"><span class="val">0 <span class="dyn-base">BTC</span></span><span>أقصى حد (صعود)</span></div>
+               <div class="order-info"><span class="val" id="margin-long-val">0.00 USDT</span><span>التكلفة</span></div>
+               <div class="order-info"><span class="val" id="liq-long-val" style="color: #fcd535;">-- USDT</span><span>سعر التصفية المقدر</span></div>
+               <button class="btn-long" onclick="executeTrade('long')">فتح صعود</button>
+               
+               <div class="order-info" style="margin-top: 10px;"><span class="val">0 <span class="dyn-base">BTC</span></span><span>أقصى حد (هبوط)</span></div>
+               <div class="order-info"><span class="val" id="margin-short-val">0.00 USDT</span><span>التكلفة</span></div>
+               <div class="order-info"><span class="val" id="liq-short-val" style="color: #fcd535;">-- USDT</span><span>سعر التصفية المقدر</span></div>
+               <button class="btn-short" onclick="executeTrade('short')">فتح هبوط</button>
+           </div>
+           
+           <div class="order-book">
+               <div class="ob-header"><span style="direction: ltr;">0.0100% / 08:00:00</span><span style="font-size: 14px; color: #b7bdc6;">⋮</span></div>
+               <div class="ob-cols"><span style="text-align: left;">السعر<br>(USDT)</span><span style="text-align: right;">المبلغ<br>(<span class="dyn-base">BTC</span>)</span></div>
+               <div id="asks-container"></div>
+               <div class="ob-current"><div class="ob-current-price" id="current-price">--- <span></span></div></div>
+               <div id="bids-container"></div>
+               
+               <div class="ratio-container">
+                   <div class="ratio-bar" style="width: 100%; height: 4px; display: flex; border-radius: 2px; overflow: hidden; background: #2b3139;">
+                       <div class="ratio-red" id="ratio-r" style="background-color: #f23645; width: 50%; transition: width 0.3s;"></div>
+                       <div class="ratio-green" id="ratio-g" style="background-color: #02c076; width: 50%; transition: width 0.3s;"></div>
+                   </div>
+                   <div class="ratio-labels" style="display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-top: 4px; margin-bottom: 4px;">
+                       <span class="red-text" id="lbl-r" style="color: #f23645;">50.0% ▼</span>
+                       <span class="green-text" id="lbl-g" style="color: #02c076;">▲ 50.0%</span>
+                   </div>
+                   <div class="precision-dropdown"><span>📋</span> 0.1 <span>▾</span></div>
+               </div>
+           </div>
+       </div>
+
+
+       <div class="positions-section">
+           <div class="pos-tabs-container">
+               <div class="pos-tabs">
+                   <div class="pos-tab active">الصفقات (<span id="pos-count">0</span>)</div>
+                   <div class="pos-tab">الطلبات (0)</div>
+               </div>
+               <div class="cancel-all" onclick="closeAllTrades()">إغلاق الكل</div>
+           </div>
+           <div style="padding: 12px 15px; font-size: 12px; color: #848e9c; display: flex; align-items: center; gap: 5px; border-bottom: 1px solid #1e2329;">
+               <input type="checkbox" style="accent-color: #fcd535;"> إخفاء الأزواج الأخرى
+           </div>
+           
+           <div id="active-positions"></div>
+           
+           <div class="empty-state" id="empty-pos-state">
+               <div style="margin-bottom: 15px; display: flex; justify-content: center;">
+                   <svg width="72" height="72" viewBox="0 0 24 24" fill="#2b3139"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 9h-2V7h-2v5H6v2h2v5h2v-5h2v-2z"/></svg>
+               </div>
+               <div style="font-size: 16px; font-weight: bold; color: #eaecef; margin-bottom: 8px;">لا توجد مراكز مفتوحة</div>
+               <div style="color: #848e9c; font-size: 13px; margin-bottom: 24px;">يمكنك البدء بالتداول الآن</div>
+               <button style="background: #fcd535; color: #0b0e11; border: none; padding: 12px 40px; border-radius: 4px; font-weight: bold; font-size: 15px; cursor: pointer;" onclick="window.location.href='/deposit/'">إيداع</button>
+           </div>
+       </div>
+   </div>
+   
+   <div id="chart-view">
+       <div class="cv-header">
+           <div class="cv-header-right" onclick="toggleView('trade')">←</div>
+           <div class="cv-header-center"><span class="dyn-coin">BTCUSDT</span> <span class="pair-badge" style="font-size: 12px; margin-right: 5px;">دائم</span></div>
+           <div class="cv-header-left">
+               <span>↗</span>
+               <span>⏱</span>
+               <span>☆</span>
+           </div>
+       </div>
+       
+       <div class="cv-tabs">
+           <span class="active">المخطط</span> 
+           <span onclick="toggleView('trade')">تداول</span> 
+           <span>معلومات</span> 
+       </div>
+       
+       <div class="cv-stats">
+           <div class="cv-stats-right">
+               <div class="cv-grid">
+                   <span class="lbl">24h أعلى</span> <span class="val" id="cv-high">---</span>
+                   <span class="lbl">24h أدنى</span> <span class="val" id="cv-low">---</span>
+                   <span class="lbl">الحجم (<span class="dyn-base">BTC</span>)</span> <span class="val" id="cv-vol-btc">---</span>
+                   <span class="lbl">الحجم (USDT)</span> <span class="val" id="cv-vol-usdt">---</span>
+               </div>
+               <span class="cv-lev-badge" id="chart-lev-badge">200x</span>
+           </div>
+           
+           <div class="cv-price-box">
+               <div class="cv-price-main" id="cv-price-main"><span id="cv-price">---</span> <span class="cv-price-vol">2.56B</span></div>
+               <div class="cv-price-sub"><span id="cv-change" class="cv-change">--%</span> ≈ <span id="cv-fiat">---</span> $</div>
+           </div>
+       </div>
+       
+       <div class="cv-timeframes">
+           <div class="cv-tf-right">
+               <span id="pencil-icon" style="font-size: 16px; padding-left: 10px; border-left: 1px solid #1e2329; cursor:pointer;" onclick="toggleDrawingTools()">✎</span>
+               <span onclick="changeTimeframe('1', '3', this)">الخط</span>
+               <span onclick="changeTimeframe('15', '1', this)">15m</span>
+               <span class="active" onclick="changeTimeframe('60', '1', this)">1h</span>
+               <span onclick="changeTimeframe('240', '1', this)">4h</span>
+               <span onclick="changeTimeframe('D', '1', this)">1D</span>
+               
+               <div style="position: relative; display: inline-block;">
+                   <span id="more-btn" onclick="toggleMoreMenu()">المزيد ▾</span>
+                   <div id="more-menu" class="more-dropdown">
+                       <div onclick="changeTimeframe('1', '1', this, '1m')">1m</div>
+                       <div onclick="changeTimeframe('3', '1', this, '3m')">3m</div>
+                       <div onclick="changeTimeframe('5', '1', this, '5m')">5m</div>
+                       <div onclick="changeTimeframe('30', '1', this, '30m')">30m</div>
+                       <div onclick="changeTimeframe('120', '1', this, '2h')">2h</div>
+                       <div onclick="changeTimeframe('360', '1', this, '6h')">6h</div>
+                       <div onclick="changeTimeframe('480', '1', this, '8h')">8h</div>
+                       <div onclick="changeTimeframe('720', '1', this, '12h')">12h</div>
+                       <div onclick="changeTimeframe('W', '1', this, 'أسبوع')">أسبوع</div>
+                       <div onclick="changeTimeframe('M', '1', this, 'شهر')">شهر</div>
+                   </div>
+               </div>
+           </div>
+           <div class="cv-tf-left">⚙️</div>
+       </div>
+       
+       <div style="position: relative; width: 100%; height: 48vh; overflow: hidden; direction: ltr; background: #12161b;">
+           <div id="tradingview_chart" style="position: absolute; top: 0; left: -55px; width: calc(100% + 55px); height: calc(100% + 90px); transition: all 0.3s ease;"></div>
+       </div>
+       
+       <div class="cv-indicators">
+           <span>MA</span> <span>EMA</span> <span>BOLL</span> <span>MACD</span> <span>RSI</span> <span>KDJ</span>
+       </div>
+       
+       <div class="cv-bottom">
+           <button class="cv-btn-long" onclick="toggleView('trade')">فتح صعود (Long)</button>
+           <button class="cv-btn-short" onclick="toggleView('trade')">فتح هبوط (Short)</button>
+       </div>
+   </div>
+   
+   <div class="bottom-nav">
+       <a href="/dashboard/" class="nav-item" style="text-decoration: none;">
+           <span style="font-size: 20px;">🏠</span>
+           <span>الرئيسية</span>
+       </a>
+       <div class="nav-item" style="cursor: pointer;">
+           <span style="font-size: 20px;">📊</span>
+           <span>الأسواق</span>
+       </div>
+       <a href="/trade/" class="nav-item" style="text-decoration: none;">
+           <span style="font-size: 20px;">💱</span>
+           <span>تداول</span>
+       </a>
+       <a href="/futures/" class="nav-item active" style="text-decoration: none; color: #fcd535;">
+           <span style="font-size: 20px;">📄</span>
+           <span style="font-weight: bold; color: #eaecef;">العقود الآجلة</span>
+       </a>
+       <a href="/wallet/" class="nav-item" style="text-decoration: none;">
+           <span style="font-size: 20px;">💼</span>
+           <span>المحفظة</span>
+       </a>
+   </div>
+
+
+   <!-- النوافذ المنبثقة -->
+   <!-- نافذة البحث عن العملات -->
+   <div id="search-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0e11; z-index:999999; flex-direction:column;">
+       <div style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #1e2329; gap:10px;">
+           <span onclick="closeSearchModal()" style="color:#848e9c; font-size:24px; cursor:pointer;">×</span>
+           <input type="text" id="search-coin-input" placeholder="بحث عن عملة... (مثال: ETH)" style="flex:1; background:#1e2329; border:none; color:#eaecef; padding:10px; border-radius:6px; outline:none; font-size:15px;" onkeyup="filterCoins()">
+       </div>
+       <div style="padding: 10px 15px; color:#848e9c; font-size:12px; font-weight:bold;">العملات الشائعة (USDT-M)</div>
+       <div id="coin-list" style="flex:1; overflow-y:auto; padding: 0 15px;">
+           <div class="coin-item" onclick="selectCoin('BTCUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">BTC<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('ETHUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">ETH<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('SOLUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">SOL<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('BNBUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">BNB<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('XRPUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">XRP<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('DOGEUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">DOGE<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('ADAUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">ADA<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('AVAXUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">AVAX<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('SHIBUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">SHIB<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('DOTUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">DOT<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('LINKUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">LINK<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('TRXUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">TRX<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('MATICUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">MATIC<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('LTCUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">LTC<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('BCHUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">BCH<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('APTUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">APT<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('NEARUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">NEAR<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('ARBUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">ARB<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('INJUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">INJ<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('OPUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">OP<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('PEPEUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">PEPE<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('SUIUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">SUI<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('FTMUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">FTM<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('ATOMUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">ATOM<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+           <div class="coin-item" onclick="selectCoin('WIFUSDT')"><span style="color:#eaecef; font-weight:bold; font-size:16px;">WIF<span style="color:#848e9c; font-size:12px;">/USDT</span></span><span style="color:#02c076; font-size:12px;">دائم</span></div>
+       </div>
+   </div>
+
+
+   <!-- نافذة الرافعة المالية -->
+   <div id="leverage-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+       <div style="background:#1e2329; width:90%; max-width:350px; border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.8); border:1px solid #2b3139;">
+           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+               <h3 style="margin:0; color:#eaecef; font-size:18px;">تعديل الرافعة المالية</h3>
+               <span onclick="closeLeverageModal()" style="color:#848e9c; font-size:24px; cursor:pointer;">×</span>
+           </div>
+           
+           <div style="background:#0b0e11; border:1px solid #2b3139; border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+               <span onclick="adjLev(-1)" style="color:#848e9c; font-size:24px; cursor:pointer; padding:0 15px; user-select:none;">-</span>
+               <input type="number" id="lev-input" value="200" style="background:transparent; border:none; color:#eaecef; font-size:22px; font-weight:bold; text-align:center; width:80px; outline:none;" oninput="updateLevSlider()">
+               <span onclick="adjLev(1)" style="color:#848e9c; font-size:24px; cursor:pointer; padding:0 15px; user-select:none;">+</span>
+           </div>
+           
+           <div style="position:relative; width:100%; margin:25px 0;">
+               <input type="range" id="lev-slider" min="1" max="2000" value="200" class="custom-slider" style="width:100%;" oninput="updateLevInput()">
+           </div>
+           
+           <div style="display:flex; justify-content:space-between; color:#848e9c; font-size:11px; margin-top:-15px; margin-bottom:20px;">
+               <span>1x</span>
+               <span>2000x</span>
+           </div>
+           
+           <div style="display:flex; gap:12px;">
+               <button onclick="closeLeverageModal()" style="flex:1; padding:12px; background:#2b3139; color:#eaecef; border:none; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">إلغاء</button>
+               <button onclick="confirmLeverage()" style="flex:1; padding:12px; background:#fcd535; color:#0b0e11; border:none; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">تأكيد</button>
+           </div>
+       </div>
+   </div>
+   
+   <!-- نافذة وضع الهامش -->
+   <div id="margin-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+       <div style="background:#1e2329; width:90%; max-width:350px; border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.8); border:1px solid #2b3139;">
+           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+               <h3 style="margin:0; color:#eaecef; font-size:18px;">وضع الهامش</h3>
+               <span onclick="closeMarginModal()" style="color:#848e9c; font-size:24px; cursor:pointer;">×</span>
+           </div>
+           
+           <div style="display:flex; gap:12px; margin-bottom:20px;">
+               <button id="btn-isolated" onclick="selectMargin('معزول')" style="flex:1; padding:12px; background:#fcd535; color:#0b0e11; border:none; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">معزول</button>
+               <button id="btn-cross" onclick="selectMargin('متبادل')" style="flex:1; padding:12px; background:#2b3139; color:#eaecef; border:1px solid #2b3139; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">متبادل</button>
+           </div>
+           
+           <button onclick="confirmMargin()" style="width:100%; padding:12px; background:#2b3139; color:#eaecef; border:1px solid #fcd535; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">تأكيد</button>
+       </div>
+   </div>
+
+
+   <!-- نافذة إغلاق المركز الذكية -->
+   <div id="close-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+       <div style="background:#1e2329; width:90%; max-width:350px; border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.8); border:1px solid #2b3139;">
+           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+               <h3 style="margin:0; color:#eaecef; font-size:18px;">إغلاق المركز</h3>
+               <span onclick="closeCloseModal()" style="color:#848e9c; font-size:24px; cursor:pointer;">×</span>
+           </div>
+           
+           <div style="color:#848e9c; font-size:13px; margin-bottom:15px; text-align:center;">
+               حدد نسبة الإغلاق من الصفقة
+           </div>
+           
+           <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:20px;">
+               <button class="pct-btn" onclick="setClosePct(25)">25%</button>
+               <button class="pct-btn" onclick="setClosePct(50)">50%</button>
+               <button class="pct-btn" onclick="setClosePct(75)">75%</button>
+               <button class="pct-btn active" onclick="setClosePct(100)">100%</button>
+           </div>
+           
+           <div style="position:relative; width:100%; margin:25px 0;">
+               <input type="range" id="close-slider" min="1" max="100" value="100" class="custom-slider" style="width:100%;" oninput="updateClosePct()">
+           </div>
+           
+           <div style="display:flex; justify-content:center; color:#fcd535; font-size:20px; font-weight:bold; margin-top:-10px; margin-bottom:20px;" id="close-pct-display">
+               100%
+           </div>
+           
+           <div style="display:flex; gap:12px;">
+               <button onclick="closeCloseModal()" style="flex:1; padding:12px; background:#2b3139; color:#eaecef; border:none; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">إلغاء</button>
+               <button onclick="confirmCloseTrade()" style="flex:1; padding:12px; background:#fcd535; color:#0b0e11; border:none; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">تأكيد الإغلاق</button>
+           </div>
+       </div>
+   </div>
+
+
+   <!-- نافذة نوع الطلب -->
+   <div id="order-type-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+       <div style="background:#1e2329; width:90%; max-width:350px; border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.8); border:1px solid #2b3139;">
+           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+               <h3 style="margin:0; color:#eaecef; font-size:18px;">نوع الطلب</h3>
+               <span onclick="closeOrderTypeModal()" style="color:#848e9c; font-size:24px; cursor:pointer;">×</span>
+           </div>
+           
+           <div style="display:flex; flex-direction:column; gap:12px;">
+               <button onclick="selectOrderType('السوق')" style="width:100%; padding:12px; background:#2b3139; color:#eaecef; border:1px solid #fcd535; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">السوق (Market)</button>
+               <button onclick="selectOrderType('حد')" style="width:100%; padding:12px; background:#2b3139; color:#eaecef; border:1px solid #2b3139; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">حد (Limit)</button>
+               <button onclick="selectOrderType('إيقاف الحد')" style="width:100%; padding:12px; background:#2b3139; color:#eaecef; border:1px solid #2b3139; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">إيقاف الحد (Stop Limit)</button>
+           </div>
+       </div>
+   </div>
+
+
+   <!-- نافذة النقل المربوطة بقاعدة البيانات -->
+   <div id="transfer-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0e11; z-index:999999; flex-direction:column;">
+       <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 20px; border-bottom:1px solid #1e2329;">
+           <span onclick="closeTransferModal()" style="color:#eaecef; font-size:24px; cursor:pointer;">→</span>
+           <span style="color:#eaecef; font-size:18px; font-weight:bold;">نقل الأرصدة</span>
+           <span style="color:#eaecef; font-size:20px; cursor:pointer;">📄</span>
+       </div>
+       
+       <div style="padding: 20px; flex:1;">
+           <div style="background:#1e2329; border-radius:12px; display:flex; align-items:center; padding:15px; margin-bottom:20px;">
+               <div onclick="swapTransfer()" style="background:#2b3139; border-radius:50%; width:36px; height:36px; display:flex; justify-content:center; align-items:center; color:#848e9c; font-size:18px; cursor:pointer; margin-left:15px; transition:0.3s;">⇅</div>
+               <div style="flex:1; display:flex; flex-direction:column; gap:15px;">
+                   <div style="display:flex; align-items:center; gap:10px;">
+                       <span style="color:#848e9c; font-size:14px; width:20px;">من</span>
+                       <span id="transfer-from" style="color:#eaecef; font-size:15px; font-weight:bold;">العقود الفورية</span>
+                   </div>
+                   <div style="height:1px; background:#2b3139; width:100%; margin-right:30px;"></div>
+                   <div style="display:flex; align-items:center; gap:10px;">
+                       <span style="color:#848e9c; font-size:14px; width:20px;">إلى</span>
+                       <span id="transfer-to" style="color:#eaecef; font-size:15px; font-weight:bold;">العقود الآجلة</span>
+                   </div>
+               </div>
+           </div>
+
+
+           <div style="background:#1e2329; border-radius:12px; padding:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+               <div style="display:flex; align-items:center; gap:8px;">
+                   <div style="background:#02c076; color:#fff; border-radius:50%; width:24px; height:24px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold;">T</div>
+                   <span style="color:#eaecef; font-size:16px; font-weight:bold;">USDT</span>
+               </div>
+               <span style="color:#848e9c; font-size:18px;"><</span>
+           </div>
+
+
+           <div style="color:#848e9c; font-size:13px; margin-bottom:10px; text-align:right;">المبلغ</div>
+           <div style="background:#1e2329; border-radius:12px; padding:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+               <input type="number" id="transfer-amount" placeholder="المجموع (USDT)" oninput="validateTransferBtn()" style="background:transparent; border:none; color:#eaecef; font-size:16px; outline:none; width:60%; direction:rtl;">
+               <div style="display:flex; align-items:center; gap:15px;">
+                   <span style="color:#eaecef; font-size:15px; font-weight:bold;">USDT</span>
+                   <span style="color:#2b3139;">|</span>
+                   <span onclick="setTransferMax()" style="color:#2962ff; font-size:15px; font-weight:bold; cursor:pointer;">الكل</span>
+               </div>
+           </div>
+           
+           <div style="display:flex; justify-content:flex-start; color:#848e9c; font-size:13px; direction:ltr;">
+               <span id="transfer-avail">0.00 USDT</span> <span style="margin-left:5px;">:متاح</span>
+           </div>
+       </div>
+
+
+       <div style="padding:20px;">
+           <button onclick="executeTransfer()" style="width:100%; background:#2b3139; color:#848e9c; border:none; padding:16px; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer;" id="transfer-btn" disabled>تأكيد النقل</button>
+       </div>
+   </div>
+
+
+   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+   <script>
+       const urlParams = new URLSearchParams(window.location.search);
+       const currentCoin = (urlParams.get('coin') || 'BTCUSDT').toUpperCase();
+       const wsSymbol = currentCoin.toLowerCase();
+       const baseAsset = currentCoin.replace('USDT', '');
+       document.querySelectorAll('.dyn-coin').forEach(el => el.innerText = currentCoin);
+       document.querySelectorAll('.dyn-base').forEach(el => el.innerText = baseAsset);
+
+
+       let spotBalance = parseFloat("{{ spot_balance|default:'0' }}");
+       let futuresBalance = parseFloat("{{ futures_balance|default:'0' }}");
+       let userBalance = futuresBalance; 
+       let isSpotToFutures = true;
+       
+       let openPositions = [
+            {% for trade in open_trades %}
+            {
+                id: {{ trade.id }},
+                type: "{{ trade.trade_type }}",
+                coin: "{{ trade.symbol }}",
+                amount: parseFloat("{{ trade.margin }}") / parseFloat("{{ trade.entry_price }}"),
+                entryPrice: parseFloat("{{ trade.entry_price }}"),
+                leverage: parseInt("{{ trade.leverage }}"),
+                margin: parseFloat("{{ trade.margin }}")
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+       ];
+
+
+       let currentLev = 200; 
+       let latestPrice = 0;
+
+
+       // ==========================================
+       // التعديل الجديد: قراءة جميع أسعار السوق لحل مشكلة السعر الوهمي
+       // ==========================================
+       let livePrices = {};
+       try {
+           const miniTickerWs = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+           miniTickerWs.onmessage = (event) => {
+               const data = JSON.parse(event.data);
+               data.forEach(ticker => {
+                   livePrices[ticker.s.toUpperCase()] = parseFloat(ticker.c);
+               });
+               updateLivePnL();
+           };
+       } catch(e) { console.log(e); }
+
+
+       function updateBalanceUI() {
+           document.getElementById('avail-balance').innerText = userBalance.toFixed(2) + " USDT";
+       }
+       updateBalanceUI();
+
+
+       function updateMargin() {
+           let marginAmount = parseFloat(document.getElementById('order-amount').value) || 0;
+           if(latestPrice > 0 && marginAmount > 0) {
+               let coinAmount = marginAmount / latestPrice;
+               document.getElementById('calc-coin-amount').value = coinAmount.toFixed(4);
+
+
+               let cost = marginAmount; 
+               document.getElementById('margin-long-val').innerText = cost.toFixed(2) + " USDT";
+               document.getElementById('margin-short-val').innerText = cost.toFixed(2) + " USDT";
+               
+               let liqLong = latestPrice * (1 - (1 / currentLev));
+               let liqShort = latestPrice * (1 + (1 / currentLev));
+               document.getElementById('liq-long-val').innerText = liqLong.toFixed(2) + " USDT";
+               document.getElementById('liq-short-val').innerText = liqShort.toFixed(2) + " USDT";
+           } else {
+               document.getElementById('calc-coin-amount').value = "";
+               document.getElementById('margin-long-val').innerText = "0.00 USDT";
+               document.getElementById('margin-short-val').innerText = "0.00 USDT";
+               document.getElementById('liq-long-val').innerText = "-- USDT";
+               document.getElementById('liq-short-val').innerText = "-- USDT";
+           }
+       }
+
+
+       function adjustAmount(change) {
+           let input = document.getElementById('order-amount');
+           let current = parseFloat(input.value) || 0;
+           let newVal = current + change;
+           input.value = newVal > 0 ? newVal.toFixed(2) : '';
+           updateMargin();
+       }
+
+
+       function sliderUpdate() {
+           let pct = document.getElementById('amount-slider').value;
+           if(latestPrice > 0 && userBalance > 0) {
+               let availMargin = (userBalance * pct) / 100;
+               document.getElementById('order-amount').value = availMargin > 0 ? availMargin.toFixed(2) : '';
+               document.getElementById('slider-usdt-display').innerText = 'USDT (' + pct + '%) ' + availMargin.toFixed(2);
+               updateMargin(); 
+           } else {
+               document.getElementById('slider-usdt-display').innerText = 'USDT (' + pct + '%) 0.00';
+           }
+       }
+
+
+       async function executeTrade(type) {
+           let marginAmount = parseFloat(document.getElementById('order-amount').value);
+           if(!marginAmount || marginAmount <= 0) return alert('الرجاء إدخال المبلغ أولاً');
+           if(!latestPrice || latestPrice <= 0) return alert('جاري الاتصال ببيانات السوق اللحظية...');
+           if(marginAmount > userBalance) return alert('الرصيد المتاح غير كافٍ');
+
+
+           try {
+               document.querySelector('.btn-long').innerText = "جاري التنفيذ...";
+               document.querySelector('.btn-short').innerText = "جاري التنفيذ...";
+               
+               const response = await fetch('/api/execute_trade/', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({
+                       symbol: currentCoin,
+                       type: type,
+                       margin: marginAmount,
+                       leverage: currentLev,
+                       entry_price: latestPrice
+                   })
+               });
+               const data = await response.json();
+               if(data.success) {
+                   alert('تم تنفيذ الأمر بنجاح!');
+                   location.reload(); 
+               } else {
+                   alert(data.error);
+                   location.reload();
+               }
+           } catch (e) {
+               alert("حدث خطأ في الاتصال بالخادم.");
+               location.reload();
+           }
+       }
+
+
+       function renderPositions() {
+           document.getElementById('pos-count').innerText = openPositions.length;
+           if(openPositions.length === 0) {
+               document.getElementById('active-positions').innerHTML = '';
+               document.getElementById('empty-pos-state').style.display = 'block';
+               return;
+           }
+           document.getElementById('empty-pos-state').style.display = 'none';
+           let html = '';
+           openPositions.forEach(p => {
+               let isLong = p.type === 'long';
+               let tStr = isLong ? 'صعود (Long)' : 'هبوط (Short)';
+               let tColor = isLong ? '#02c076' : '#f23645';
+               let tBg = isLong ? 'rgba(2, 192, 118, 0.15)' : 'rgba(242, 54, 69, 0.15)';
+               let liqPrice = isLong ? p.entryPrice * (1 - (1/p.leverage)) : p.entryPrice * (1 + (1/p.leverage));
+               
+               html += `
+               <div class="pos-card">
+                   <div class="pos-header">
+                       <span style="color:#eaecef; font-weight:800; font-size:16px;">${p.coin} <span class="pos-badge" style="color:${tColor}; background:${tBg}; margin-right:6px;">${p.leverage}X ${tStr}</span></span>
+                   </div>
+                   <div class="pos-grid">
+                       <div><span style="display:block; margin-bottom:4px;">حجم (${p.coin.replace('USDT', '')})</span><span class="val" style="font-family:monospace;">${p.amount.toFixed(4)}</span></div>
+                       <div><span style="display:block; margin-bottom:4px;">سعر الدخول</span><span class="val" style="font-family:monospace;">${p.entryPrice.toFixed(2)}</span></div>
+                       <div><span style="display:block; margin-bottom:4px;">السعر العادل</span><span class="val" id="pprice-${p.id}" style="font-family:monospace;">${latestPrice.toFixed(2)}</span></div>
+                       <div><span style="display:block; margin-bottom:4px;">الهامش (USDT)</span><span class="val" style="font-family:monospace;">${p.margin.toFixed(2)}</span></div>
+                       <div><span style="display:block; margin-bottom:4px;">سعر التصفية</span><span class="val" style="color:#fcd535; font-family:monospace;">${liqPrice.toFixed(2)}</span></div>
+                       <div><span style="display:block; margin-bottom:4px;">الربح/الخسارة</span><span class="val" id="ppnl-${p.id}" style="font-size:12px; font-family:monospace; direction:ltr; display:inline-block;">+0.00 (0.00%)</span></div>
+                   </div>
+                   <button style="width:100%; margin-top:15px; background:#2b3139; color:#eaecef; border:none; padding:12px; border-radius:6px; font-weight:bold; font-size:14px; cursor:pointer;" onclick="openCloseModal(${p.id})">إغلاق المركز</button>
+               </div>`;
+           });
+           document.getElementById('active-positions').innerHTML = html;
+           updateLivePnL();
+       }
+
+
+       // ==========================================
+       // التعديل الجديد: حساب الربح والخسارة بناء على سعر العملة الصحيح
+       // ==========================================
+       function updateLivePnL() {
+           openPositions.forEach(p => {
+               // إذا كانت الأسعار الكلية لم تحمل بعد، نستخدم السعر الحالي إذا كانت نفس العملة، أو سعر الدخول مؤقتاً
+               let currentCoinPrice = livePrices[p.coin.toUpperCase()];
+               if (!currentCoinPrice) {
+                   currentCoinPrice = (p.coin.toUpperCase() === currentCoin) ? latestPrice : p.entryPrice;
+               }
+
+
+               let pnl = p.type === 'long' ? 
+                   (currentCoinPrice - p.entryPrice) * p.amount * p.leverage : 
+                   (p.entryPrice - currentCoinPrice) * p.amount * p.leverage;
+                   
+               let roe = (pnl / p.margin) * 100;
+               let sign = pnl >= 0 ? '+' : '';
+               let color = pnl >= 0 ? '#02c076' : '#f23645';
+               
+               let pnlEl = document.getElementById(`ppnl-${p.id}`);
+               let priceEl = document.getElementById(`pprice-${p.id}`);
+               if(pnlEl) { 
+                   pnlEl.innerHTML = `<span style="color:${color};">${sign}${pnl.toFixed(2)} USDT (${sign}${roe.toFixed(2)}%)</span>`; 
+                   priceEl.innerText = currentCoinPrice.toFixed(2); 
+               }
+           });
+       }
+
+
+       let tradeToCloseId = null;
+
+
+       function openCloseModal(id) {
+           tradeToCloseId = id;
+           setClosePct(100);
+           document.getElementById('close-modal').style.display = 'flex';
+       }
+
+
+       function closeCloseModal() {
+           document.getElementById('close-modal').style.display = 'none';
+           tradeToCloseId = null;
+       }
+
+
+       function setClosePct(pct) {
+           document.getElementById('close-slider').value = pct;
+           document.getElementById('close-pct-display').innerText = pct + '%';
+           document.querySelectorAll('.pct-btn').forEach(b => {
+               if(b.innerText === pct + '%') b.classList.add('active');
+               else b.classList.remove('active');
+           });
+       }
+
+
+       function updateClosePct() {
+           let pct = document.getElementById('close-slider').value;
+           document.getElementById('close-pct-display').innerText = pct + '%';
+           document.querySelectorAll('.pct-btn').forEach(b => b.classList.remove('active'));
+       }
+
+
+       async function confirmCloseTrade() {
+           if(!tradeToCloseId) return;
+           let pct = parseInt(document.getElementById('close-slider').value);
+           let idx = openPositions.findIndex(p => p.id === tradeToCloseId);
+           
+           if(idx > -1) {
+               let p = openPositions[idx];
+               // نستخدم السعر الحقيقي للعملة عند إغلاقها
+               let currentCoinPrice = livePrices[p.coin.toUpperCase()] || latestPrice;
+               
+               try {
+                   const response = await fetch('/api/close_trade/', {
+                       method: 'POST',
+                       headers: { 'Content-Type': 'application/json' },
+                       body: JSON.stringify({
+                           trade_id: tradeToCloseId,
+                           percent: pct,
+                           close_price: currentCoinPrice
+                       })
+                   });
+                   const data = await response.json();
+                   if(data.success) {
+                       alert(`تم إغلاق ${pct}% من الصفقة بنجاح!`);
+                       location.reload();
+                   } else {
+                       alert(data.error);
+                   }
+               } catch (e) {
+                   alert("حدث خطأ في الاتصال بالخادم.");
+               }
+           }
+           closeCloseModal();
+       }
+
+
+       async function closeAllTrades() { 
+           if(openPositions.length > 0 && confirm('الرجاء الانتظار، سيتم إغلاق كافة الصفقات تباعاً على السعر الحالي...')) { 
+               for (let p of openPositions) {
+                   let currentCoinPrice = livePrices[p.coin.toUpperCase()] || latestPrice;
+                   await fetch('/api/close_trade/', {
+                       method: 'POST',
+                       headers: { 'Content-Type': 'application/json' },
+                       body: JSON.stringify({ trade_id: p.id, percent: 100, close_price: currentCoinPrice })
+                   });
+               }
+               alert('تم إغلاق الصفقات بنجاح!');
+               location.reload();
+           } 
+       }
+
+
+       function showLeverageModal() {
+           document.getElementById('lev-input').value = currentLev;
+           document.getElementById('lev-slider').value = currentLev;
+           document.getElementById('leverage-modal').style.display = 'flex';
+       }
+       function closeLeverageModal() {
+           document.getElementById('leverage-modal').style.display = 'none';
+       }
+       function adjLev(change) {
+           let inp = document.getElementById('lev-input');
+           let val = parseInt(inp.value) + change;
+           if(val >= 1 && val <= 2000) { inp.value = val; document.getElementById('lev-slider').value = val; }
+       }
+       function updateLevInput() { document.getElementById('lev-input').value = document.getElementById('lev-slider').value; }
+       function updateLevSlider() { document.getElementById('lev-slider').value = document.getElementById('lev-input').value; }
+       
+       function confirmLeverage() {
+           let newLev = parseInt(document.getElementById('lev-input').value);
+           if(newLev >= 1 && newLev <= 2000) {
+               currentLev = newLev;
+               document.getElementById('lev-btn').innerText = currentLev + 'X ▾';
+               document.getElementById('chart-lev-badge').innerText = currentLev + 'x';
+               updateMargin();
+               closeLeverageModal();
+           }
+       }
+
+
+       let currentMarginMode = 'معزول';
+       let tempMarginMode = 'معزول';
+       
+       function showMarginModal() {
+           tempMarginMode = currentMarginMode;
+           updateMarginModalUI();
+           document.getElementById('margin-modal').style.display = 'flex';
+       }
+       function closeMarginModal() {
+           document.getElementById('margin-modal').style.display = 'none';
+       }
+       function selectMargin(mode) {
+           tempMarginMode = mode;
+           updateMarginModalUI();
+       }
+       function updateMarginModalUI() {
+           if(tempMarginMode === 'متبادل') {
+               document.getElementById('btn-cross').style.background = '#fcd535';
+               document.getElementById('btn-cross').style.color = '#0b0e11';
+               document.getElementById('btn-cross').style.border = 'none';
+               
+               document.getElementById('btn-isolated').style.background = '#2b3139';
+               document.getElementById('btn-isolated').style.color = '#eaecef';
+               document.getElementById('btn-isolated').style.border = '1px solid #2b3139';
+           } else {
+               document.getElementById('btn-isolated').style.background = '#fcd535';
+               document.getElementById('btn-isolated').style.color = '#0b0e11';
+               document.getElementById('btn-isolated').style.border = 'none';
+               
+               document.getElementById('btn-cross').style.background = '#2b3139';
+               document.getElementById('btn-cross').style.color = '#eaecef';
+               document.getElementById('btn-cross').style.border = '1px solid #2b3139';
+           }
+       }
+       function confirmMargin() {
+           currentMarginMode = tempMarginMode;
+           document.getElementById('margin-btn').innerText = currentMarginMode + ' ▾';
+           closeMarginModal();
+       }
+
+
+       function showOrderTypeModal() { document.getElementById('order-type-modal').style.display = 'flex'; }
+       function closeOrderTypeModal() { document.getElementById('order-type-modal').style.display = 'none'; }
+       function selectOrderType(type) { document.getElementById('order-type-input').value = type + ' ▾'; closeOrderTypeModal(); }
+
+
+       function showSearchModal() { document.getElementById('search-modal').style.display = 'flex'; document.getElementById('search-coin-input').focus(); }
+       function closeSearchModal() { document.getElementById('search-modal').style.display = 'none'; }
+       function selectCoin(coinName) { window.location.search = '?coin=' + coinName; }
+       function filterCoins() {
+           let filter = document.getElementById('search-coin-input').value.toUpperCase();
+           let items = document.querySelectorAll('.coin-item');
+           items.forEach(item => {
+               let text = item.innerText.toUpperCase();
+               if(text.indexOf(filter) > -1) { item.style.display = 'flex'; } 
+               else { item.style.display = 'none'; }
+           });
+       }
+       
+       function showTransferModal() {
+           document.getElementById('transfer-modal').style.display = 'flex';
+           document.getElementById('transfer-amount').value = '';
+           updateTransferUI();
+       }
+       function closeTransferModal() { document.getElementById('transfer-modal').style.display = 'none'; }
+
+
+       function swapTransfer() {
+           isSpotToFutures = !isSpotToFutures;
+           document.getElementById('transfer-from').innerText = isSpotToFutures ? 'العقود الفورية' : 'العقود الآجلة';
+           document.getElementById('transfer-to').innerText = isSpotToFutures ? 'العقود الآجلة' : 'العقود الفورية';
+           updateTransferUI();
+       }
+
+
+       function updateTransferUI() {
+           let avail = isSpotToFutures ? spotBalance : futuresBalance;
+           document.getElementById('transfer-avail').innerText = avail.toFixed(2) + ' USDT';
+           validateTransferBtn();
+       }
+
+
+       function setTransferMax() {
+           let avail = isSpotToFutures ? spotBalance : futuresBalance;
+           document.getElementById('transfer-amount').value = avail > 0 ? avail.toFixed(2) : '';
+           validateTransferBtn();
+       }
+
+
+       function validateTransferBtn() {
+           let amount = parseFloat(document.getElementById('transfer-amount').value);
+           let avail = isSpotToFutures ? spotBalance : futuresBalance;
+           let btn = document.getElementById('transfer-btn');
+           if(amount > 0 && amount <= avail) { btn.style.background = '#fcd535'; btn.style.color = '#0b0e11'; btn.disabled = false; }
+           else { btn.style.background = '#2b3139'; btn.style.color = '#848e9c'; btn.disabled = true; }
+       }
+
+
+       async function executeTransfer() {
+           let amount = parseFloat(document.getElementById('transfer-amount').value);
+           let avail = isSpotToFutures ? spotBalance : futuresBalance;
+           if(!amount || amount <= 0 || amount > avail) return;
+           
+           let fromW = isSpotToFutures ? 'spot' : 'futures';
+           let toW = isSpotToFutures ? 'futures' : 'spot';
+
+
+           try {
+               document.getElementById('transfer-btn').innerText = "جاري النقل...";
+               const response = await fetch('/api/transfer/', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ amount: amount, from_wallet: fromW, to_wallet: toW })
+               });
+               const data = await response.json();
+
+
+               if(data.success) {
+                   alert("تم النقل بنجاح!");
+                   location.reload(); 
+               } else {
+                   alert(data.error);
+                   document.getElementById('transfer-btn').innerText = "تأكيد النقل";
+               }
+           } catch (e) {
+               alert("حدث خطأ في الاتصال.");
+               document.getElementById('transfer-btn').innerText = "تأكيد النقل";
+           }
+       }
+
+
+       let drawingsVisible = false;
+       function toggleDrawingTools() {
+           drawingsVisible = !drawingsVisible;
+           const pencil = document.getElementById('pencil-icon');
+           const tvChart = document.getElementById('tradingview_chart');
+           if(drawingsVisible) { pencil.style.color = '#eaecef'; tvChart.style.left = '0'; tvChart.style.width = '100%'; }
+           else { pencil.style.color = '#848e9c'; tvChart.style.left = '-55px'; tvChart.style.width = 'calc(100% + 55px)'; }
+       }
+
+
+       function toggleMoreMenu() { 
+           const menu = document.getElementById('more-menu'); 
+           menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex'; 
+       }
+
+
+       let currentInterval = "60"; let currentStyle = "1"; let tvWidget = null; let chartInitialized = false;
+
+
+       function initChart() {
+           document.getElementById('tradingview_chart').innerHTML = ''; 
+           tvWidget = new TradingView.widget({
+               "autosize": true, "symbol": "BINANCE:" + currentCoin, "interval": currentInterval, "timezone": "Etc/UTC", "theme": "dark", "style": currentStyle, "locale": "ar",
+               "enable_publishing": false, "backgroundColor": "#12161b", "gridColor": "#1e2329", "hide_top_toolbar": true, "hide_legend": true, "hide_side_toolbar": false, "save_image": false,
+               "client_id": "mexc_pro", "user_id": "mexc_user", "container_id": "tradingview_chart", "toolbar_bg": "#12161b"
+           });
+       }
+
+
+       function changeTimeframe(interval, style, element, moreText = null) {
+           document.querySelectorAll('.cv-tf-right span, .more-dropdown div').forEach(s => s.classList.remove('active'));
+           const moreBtn = document.getElementById('more-btn');
+           if (moreText) { 
+               moreBtn.classList.add('active'); 
+               moreBtn.innerText = moreText + ' ▾'; 
+               document.getElementById('more-menu').style.display = 'none';
+           } else { 
+               if(element.id !== 'pencil-icon') element.classList.add('active'); 
+               moreBtn.classList.remove('active'); 
+               moreBtn.innerText = 'المزيد ▾'; 
+           }
+           currentInterval = interval; currentStyle = style; initChart(); 
+       }
+
+
+       function toggleView(view) {
+           if(view === 'chart') {
+               document.getElementById('trade-view').style.display = 'none'; document.getElementById('chart-view').style.display = 'block'; document.querySelector('.bottom-nav').style.display = 'none';
+               if(!chartInitialized) { initChart(); chartInitialized = true; }
+           } else { document.getElementById('trade-view').style.display = 'block'; document.getElementById('chart-view').style.display = 'none'; document.querySelector('.bottom-nav').style.display = 'flex'; }
+       }
+
+
+       function formatVal(v) { let n = parseFloat(v); return isNaN(n) ? '0.00' : (n < 10 ? n.toFixed(4) : n.toFixed(1)); }
+       function formatAmount(v) { return parseFloat(v).toFixed(4); }
+       function formatVol(v) { let num = parseFloat(v); if(num >= 1e9) return (num/1e9).toFixed(2) + 'B'; if(num >= 1e6) return (num/1e6).toFixed(2) + 'M'; if(num >= 1e3) return (num/1e3).toFixed(2) + 'K'; return num.toFixed(2); }
+
+
+       try {
+           const tickerWs = new WebSocket('wss://stream.binance.com:9443/ws/' + wsSymbol + '@ticker');
+           tickerWs.onmessage = (event) => {
+               const data = JSON.parse(event.data); const price = formatVal(data.c); const percent = parseFloat(data.P).toFixed(2);
+               latestPrice = parseFloat(price); updateMargin(); renderPositions();
+               const cPriceEl = document.getElementById('current-price'); const oldP = parseFloat(cPriceEl.innerText.replace(/[^0-9.]/g, '')) || 0; const newP = parseFloat(price);
+               
+               cPriceEl.innerHTML = price + (newP < oldP ? ' <span style="font-size:16px;">↓</span>' : ' <span style="font-size:16px;">↑</span>'); cPriceEl.className = 'ob-current-price ' + (newP < oldP ? 'down' : '');
+               
+               let headerUsdtPrice = document.getElementById('header-price-usdt');
+               if(headerUsdtPrice) {
+                   headerUsdtPrice.innerText = price + ' USDT';
+                   headerUsdtPrice.style.color = (newP < oldP ? '#f23645' : '#02c076');
+               }
+               
+               document.getElementById('cv-price').innerText = price; 
+               document.getElementById('cv-price-main').className = 'cv-price-main ' + (newP < oldP ? '' : 'up'); 
+               document.getElementById('cv-fiat').innerText = price;
+               
+               const pText = (percent >= 0 ? '+' : '') + percent + '%'; 
+               document.getElementById('cv-change').innerText = pText; 
+               document.getElementById('cv-change').style.color = (percent < 0 ? '#f23645' : '#848e9c');
+               
+               document.getElementById('cv-high').innerText = formatVal(data.h); 
+               document.getElementById('cv-low').innerText = formatVal(data.l); 
+               document.getElementById('cv-vol-btc').innerText = formatVol(data.v); 
+               document.getElementById('cv-vol-usdt').innerText = formatVol(data.q);
+           };
+
+
+           const depthWs = new WebSocket('wss://stream.binance.com:9443/ws/' + wsSymbol + '@depth20@100ms');
+           depthWs.onmessage = (event) => {
+               const data = JSON.parse(event.data); const rawAsks = data.asks || data.a; const rawBids = data.bids || data.b; if(!rawAsks || !rawBids) return;
+               let asksHtml = ''; let bidsHtml = ''; 
+               const asks = rawAsks.slice(0, 10).reverse(); const bids = rawBids.slice(0, 10);
+               let maxVol = Math.max(...asks.map(a => parseFloat(a[1])), ...bids.map(b => parseFloat(b[1]))); if(maxVol === 0) maxVol = 1;
+               
+               let totalAsksVol = 0; let totalBidsVol = 0;
+
+
+               asks.forEach(ask => { 
+                   let vol = parseFloat(ask[1]); totalAsksVol += vol;
+                   asksHtml += `<div class="ob-row"><div class="ob-bg red" style="width:${(vol/maxVol)*100}%"></div><div class="ob-text"><span class="ob-price red">${formatVal(ask[0])}</span><span class="ob-amount">${formatAmount(ask[1])}</span></div></div>`; 
+               });
+               bids.forEach(bid => { 
+                   let vol = parseFloat(bid[1]); totalBidsVol += vol;
+                   bidsHtml += `<div class="ob-row"><div class="ob-bg green" style="width:${(vol/maxVol)*100}%"></div><div class="ob-text"><span class="ob-price green">${formatVal(bid[0])}</span><span class="ob-amount">${formatAmount(bid[1])}</span></div></div>`; 
+               });
+               document.getElementById('asks-container').innerHTML = asksHtml; document.getElementById('bids-container').innerHTML = bidsHtml;
+
+
+               let totalVol = totalAsksVol + totalBidsVol;
+               if(totalVol > 0) {
+                   let redPct = (totalAsksVol / totalVol) * 100;
+                   let greenPct = (totalBidsVol / totalVol) * 100;
+                   
+                   let ratioR = document.getElementById('ratio-r'); let ratioG = document.getElementById('ratio-g');
+                   let lblR = document.getElementById('lbl-r'); let lblG = document.getElementById('lbl-g');
+                   if(ratioR && ratioG && lblR && lblG) {
+                       ratioR.style.width = redPct + '%'; ratioG.style.width = greenPct + '%';
+                       lblR.innerText = redPct.toFixed(1) + '% ▼'; lblG.innerText = '▲ ' + greenPct.toFixed(1) + '%';
+                   }
+               }
+           };
+       } catch(e) { console.log(e); }
+       renderPositions();
+
+
+       document.addEventListener('DOMContentLoaded', () => {
+           const topNavLinks = document.querySelectorAll('.nav-links span');
+           topNavLinks.forEach(link => { link.addEventListener('click', (e) => { topNavLinks.forEach(l => l.classList.remove('active')); e.target.classList.add('active'); }); });
+           const indicators = document.querySelectorAll('.cv-indicators span');
+           indicators.forEach(ind => { ind.style.cursor = 'pointer'; ind.addEventListener('click', (e) => { let el = e.target; if(el.style.color === 'rgb(252, 213, 53)' || el.style.color === '#fcd535') { el.style.color = '#848e9c'; el.style.fontWeight = 'normal'; } else { el.style.color = '#fcd535'; el.style.fontWeight = 'bold'; } }); });
+           const chartTabs = document.querySelectorAll('.cv-tabs');
+           chartTabs.forEach(tabContainer => { const tabs = tabContainer.querySelectorAll('span'); tabs.forEach(tab => { tab.style.cursor = 'pointer'; tab.addEventListener('click', (e) => { if(e.target.innerText === 'المخطط' || e.target.innerText === 'تداول' || e.target.innerText === 'معلومات'){ tabs.forEach(t => t.classList.remove('active')); e.target.classList.add('active'); } }); }); });
+       });
+   </script>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>المحفظة - نظرة عامة</title>
+    <style>
+        body { background-color: #0b0e11; color: #eaecef; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; padding-bottom: 80px; }
+        .top-nav { display: flex; align-items: center; padding: 15px 20px; gap: 20px; border-bottom: 1px solid #181a20; overflow-x: auto; white-space: nowrap; }
+        .menu-icon { font-size: 1.5em; color: #eaecef; }
+        .tab-item { color: #848e9c; font-size: 0.9em; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .tab-item.active { color: #eaecef; font-size: 1em; border-bottom: 2px solid #eaecef; padding-bottom: 5px; }
+        .balance-section { padding: 20px; }
+        .wallet-section { display: none; }
+        .wallet-section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .balance-header { display: flex; justify-content: space-between; color: #848e9c; font-size: 0.85em; margin-bottom: 10px; }
+        .balance-amount { display: flex; align-items: center; gap: 10px; font-size: 2.5em; font-weight: bold; color: #ffffff; }
+        .currency-tag { font-size: 0.4em; font-weight: normal; color: #848e9c; }
+        .usd-estimate { color: #848e9c; font-size: 0.9em; margin-top: 5px; }
+        .action-buttons { display: flex; gap: 10px; padding: 0 20px 20px; }
+        .btn { flex: 1; padding: 12px 0; border-radius: 20px; font-weight: bold; font-size: 0.9em; text-align: center; border: none; cursor: pointer; }
+        .btn-deposit { background-color: #ffffff; color: #0b0e11; }
+        .btn-dark { background-color: #181a20; color: #eaecef; }
+        .promo-banner { margin: 0 20px 20px; background-color: #181a20; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .promo-text { color: #eaecef; font-size: 0.85em; }
+        .promo-badge { background-color: #2b3139; padding: 5px 8px; border-radius: 8px; font-size: 0.7em; color: #848e9c; }
+        .sub-tabs-container { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; }
+        .sub-tabs { display: flex; gap: 20px; font-size: 0.9em; font-weight: bold; color: #848e9c; }
+        .sub-tabs .active { color: #eaecef; }
+        .filter-row { display: flex; align-items: center; gap: 8px; padding: 0 20px 20px; color: #848e9c; font-size: 0.8em; }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: #848e9c; }
+        .empty-icon { font-size: 4em; margin-bottom: 15px; opacity: 0.6; filter: grayscale(100%); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: #1e2329; display: flex; justify-content: space-around; flex-direction: row; padding: 12px 0; border-top: 1px solid #2b3139; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #848e9c; font-size: 11px; gap: 4px; text-decoration: none; font-weight: 500;}
+        .nav-item.active { color: #eaecef; }
+        
+        /* Modal النقل */
+        .transfer-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0b0e11; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .modal-header { display: flex; align-items: center; gap: 15px; font-size: 1.2em; margin-bottom: 30px; font-weight: bold;}
+        .close-modal { cursor: pointer; font-size: 1.5em; }
+        .transfer-box { background-color: #181a20; border-radius: 12px; padding: 15px; margin-bottom: 20px;}
+        .transfer-row { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; }
+        .transfer-label { color: #848e9c; font-size: 0.9em; width: 60px; }
+        .transfer-select { background: transparent; border: none; color: #eaecef; font-size: 1em; font-weight: bold; outline: none; flex-grow: 1; }
+        .transfer-select option { background-color: #181a20; color: #eaecef; }
+        .amount-box { background-color: #181a20; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between;}
+        .amount-input { background: transparent; border: none; color: #eaecef; font-size: 1.2em; outline: none; width: 70%; }
+        .amount-input::placeholder { color: #848e9c; }
+        .amount-max { color: #fcd535; font-weight: bold; cursor: pointer; padding-right: 10px; border-right: 1px solid #2b3139; }
+        .currency-tag-input { color: #eaecef; font-weight: bold; padding-left: 10px; }
+        .avail-balance { color: #848e9c; font-size: 0.85em; margin-top: 10px;}
+        .submit-transfer { background-color: #fcd535; color: #0b0e11; width: calc(100% - 40px); padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1em; border: none; cursor: pointer; position: absolute; bottom: 20px; left: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <div class="menu-icon">≡</div>
+        <div id="tab-overview" class="tab-item active" onclick="switchWalletTab('overview', this)">نظرة عامة</div>
+        <div id="tab-spot" class="tab-item" onclick="switchWalletTab('spot', this)">العقود الفورية</div>
+        <div class="tab-item">السهم</div>
+        <div id="tab-futures" class="tab-item" onclick="switchWalletTab('futures', this)">العقود الآجلة</div>
+    </div>
+
+    <div class="balance-section">
+        
+        <!-- قسم: نظرة عامة (إجمالي الرصيد يرتفع ويهبط) -->
+        <div id="overview-section" class="wallet-section active">
+            <div class="balance-header">
+                <div>إجمالي الرصيد (نظرة عامة) 👁️</div>
+                <div class="live-pnl-display">أرباح 💰 ›</div>
+            </div>
+            <div class="balance-amount">
+                <span class="live-total-balance">{{ balance|default:"0"|floatformat:"2g" }}</span>
+                <span class="currency-tag">▼ USDT</span>
+            </div>
+            <div class="usd-estimate">
+                ≈ <span class="live-total-balance">{{ balance|default:"0"|floatformat:"2g" }}</span> USD ∨
+            </div>
+        </div>
+
+        <!-- قسم: العقود الفورية -->
+        <div id="spot-section" class="wallet-section">
+            <div class="balance-header">
+                <div>رصيد العقود الفورية 👁️</div>
+                <div>أرباح 💰 ›</div>
+            </div>
+            <div class="balance-amount">
+                <span>{{ spot_balance|default:"0"|floatformat:"2g" }}</span>
+                <span class="currency-tag">▼ USDT</span>
+            </div>
+            <div class="usd-estimate">
+                ≈ <span>{{ spot_balance|default:"0"|floatformat:"2g" }}</span> USD ∨
+            </div>
+        </div>
+
+        <!-- قسم: العقود الآجلة (الرصيد يرتفع ويهبط) -->
+        <div id="futures-section" class="wallet-section">
+            <div class="balance-header">
+                <div>رصيد العقود الآجلة 👁️</div>
+                <div class="live-pnl-display">أرباح 💰 ›</div>
+            </div>
+            <div class="balance-amount">
+                <span class="live-futures-balance">{{ futures_balance|default:"0"|floatformat:"2g" }}</span>
+                <span class="currency-tag">▼ USDT</span>
+            </div>
+            <div class="usd-estimate">
+                ≈ <span class="live-futures-balance">{{ futures_balance|default:"0"|floatformat:"2g" }}</span> USD ∨
+            </div>
+        </div>
+
+    </div>
+
+    <!-- أزرار الإيداع والسحب والنقل -->
+    <div class="action-buttons">
+        <button class="btn btn-deposit" onclick="window.location.href='/deposit/'">إيداع</button>
+        <button class="btn btn-dark" onclick="window.location.href='/withdraw_coin/'">سحب</button>
+        <button class="btn btn-dark" onclick="openTransfer()">نقل</button>
+        <button class="btn btn-dark">تحويل</button>
+    </div>
+
+    <div class="promo-banner">
+        <div class="promo-text">العقود الآجلة للأحداث 📘</div>
+        <div class="promo-badge">4/5</div>
+    </div>
+
+    <div class="sub-tabs-container">
+        <div style="font-size: 1.2em; color: #848e9c;">🔍</div>
+        <div class="sub-tabs">
+            <div>الحساب ⓘ</div>
+            <div class="active">الكريبتو</div>
+        </div>
+    </div>
+
+    <div class="filter-row">
+        <input type="checkbox" id="hideSmall" style="accent-color: #181a20;">
+        <label for="hideSmall">إخفاء الأرصدة الصغيرة</label>
+    </div>
+
+    <div class="empty-state">
+        <div class="empty-icon">📁</div>
+        <div>لا توجد بيانات</div>
+    </div>
+
+    <!-- الشريط السفلي -->
+    <div class="bottom-nav">
+        <a href="/dashboard/" class="nav-item" style="text-decoration: none;">
+            <span style="font-size: 20px;">🏠</span>
+            <span>الرئيسية</span>
+        </a>
+        <div class="nav-item">
+            <span style="font-size: 20px;">📊</span>
+            <span>الأسواق</span>
+        </div>
+        <a href="/trade/" class="nav-item" style="text-decoration: none;">
+            <span style="font-size: 20px;">💱</span>
+            <span>تداول</span>
+        </a>
+        <a href="/futures/" class="nav-item" style="text-decoration: none;">
+            <span style="font-size: 20px;">📄</span>
+            <span>العقود الآجلة</span>
+        </a>
+        <a href="/wallet/" class="nav-item active" style="text-decoration: none; color: #fcd535;">
+            <span style="font-size: 20px;">💼</span>
+            <span style="font-weight: bold; color: #eaecef;">المحفظة</span>
+        </a>
+    </div>
+
+    <!-- شاشة النقل -->
+    <div id="transferModal" class="transfer-modal">
+        <div class="modal-header">
+            <span class="close-modal" onclick="closeTransfer()">→</span>
+            <span>نقل الأرصدة</span>
+        </div>
+        
+        <div class="transfer-box">
+            <div class="transfer-row">
+                <span class="transfer-label">من</span>
+                <select id="fromWallet" class="transfer-select" onchange="handleWalletChange('from')">
+                    <option value="spot">العقود الفورية</option>
+                    <option value="futures">العقود الآجلة</option>
+                </select>
+            </div>
+            <div style="border-bottom: 1px solid #2b3139; margin-bottom: 15px;"></div>
+            <div class="transfer-row">
+                <span class="transfer-label">إلى</span>
+                <select id="toWallet" class="transfer-select" onchange="handleWalletChange('to')">
+                    <option value="futures">العقود الآجلة</option>
+                    <option value="spot">العقود الفورية</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 10px; color: #848e9c; font-size: 0.9em;">المبلغ</div>
+        <div class="amount-box">
+            <input type="number" id="transferAmount" class="amount-input" placeholder="المجموع (USDT)">
+            <div style="display:flex; align-items:center;">
+                <span class="currency-tag-input">USDT</span>
+                <span class="amount-max" onclick="setMaxAmount()">الكل</span>
+            </div>
+        </div>
+        <div class="avail-balance">متاح: <span id="availAmountText">0.00</span> USDT</div>
+
+        <button class="submit-transfer" onclick="submitTransfer()">تأكيد النقل</button>
+    </div>
+
+    <script>
+        // الأرصدة الثابتة القادمة من قاعدة البيانات
+        let spotBalance = parseFloat("{{ spot_balance|default:'0' }}");
+        let staticFuturesBalance = parseFloat("{{ futures_balance|default:'0' }}");
+
+        // جلب صفقات العقود المفتوحة من السيرفر
+        const openTrades = [
+            {% for trade in open_trades %}
+            {
+                symbol: "{{ trade.symbol }}".toLowerCase(),
+                type: "{{ trade.trade_type }}",
+                entryPrice: parseFloat("{{ trade.entry_price }}"),
+                margin: parseFloat("{{ trade.margin }}"),
+                leverage: parseInt("{{ trade.leverage }}")
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        // سحر التراقص (WebSocket) للحصول على الربح والخسارة لحظياً
+        let livePrices = {};
+        if(openTrades.length > 0) {
+            const ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+            ws.onmessage = (event) => {
+                let data = JSON.parse(event.data);
+                data.forEach(ticker => { livePrices[ticker.s.toLowerCase()] = parseFloat(ticker.c); });
+
+                let totalPnl = 0;
+                openTrades.forEach(t => {
+                    let currentPrice = livePrices[t.symbol];
+                    if(currentPrice) {
+                        let qty = t.margin / t.entryPrice;
+                        let pnl = t.type === 'long' ? 
+                            (currentPrice - t.entryPrice) * qty * t.leverage : 
+                            (t.entryPrice - currentPrice) * qty * t.leverage;
+                        totalPnl += pnl;
+                    }
+                });
+
+                // تحديث الأرصدة لحظياً أمام عين المستخدم
+                let currentFutures = staticFuturesBalance + totalPnl;
+                let currentTotal = spotBalance + currentFutures;
+
+                document.querySelectorAll('.live-total-balance').forEach(el => el.innerText = currentTotal.toFixed(2));
+                document.querySelectorAll('.live-futures-balance').forEach(el => el.innerText = currentFutures.toFixed(2));
+                
+                document.querySelectorAll('.live-pnl-display').forEach(el => {
+                    if(totalPnl > 0) {
+                        el.innerHTML = `أرباح <span style="color:#02c076;">+${totalPnl.toFixed(2)} USDT</span> ›`;
+                    } else if (totalPnl < 0) {
+                        el.innerHTML = `خسارة <span style="color:#f23645;">${totalPnl.toFixed(2)} USDT</span> ›`;
+                    } else {
+                        el.innerHTML = `أرباح 💰 ›`;
+                    }
+                });
+            };
+        }
+
+        // ===================================
+        // كود الذاكرة للتبويبات لمنع العودة لـ"نظرة عامة" عند التحديث
+        // ===================================
+        let activeTabId = localStorage.getItem('walletActiveTab') || 'overview';
+        let tabElement = document.getElementById('tab-' + activeTabId);
+        if(tabElement) { switchWalletTab(activeTabId, tabElement); }
+
+        function switchWalletTab(sectionId, element) {
+            document.querySelectorAll('.top-nav .tab-item').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+
+            document.querySelectorAll('.wallet-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(sectionId + '-section').classList.add('active');
+            
+            localStorage.setItem('walletActiveTab', sectionId); // حفظ التبويب الحالي
+        }
+
+        // دوال شاشة النقل
+        function openTransfer() { document.getElementById('transferModal').style.display = 'block'; updateAvailable(); }
+        function closeTransfer() { document.getElementById('transferModal').style.display = 'none'; }
+
+        function handleWalletChange(source) {
+            const fromW = document.getElementById('fromWallet');
+            const toW = document.getElementById('toWallet');
+            if (source === 'from' && fromW.value === toW.value) { toW.value = fromW.value === 'spot' ? 'futures' : 'spot'; } 
+            else if (source === 'to' && toW.value === fromW.value) { fromW.value = toW.value === 'spot' ? 'futures' : 'spot'; }
+            updateAvailable();
+        }
+
+        function updateAvailable() {
+            const fromW = document.getElementById('fromWallet').value;
+            document.getElementById('availAmountText').innerText = fromW === 'spot' ? spotBalance.toFixed(2) : staticFuturesBalance.toFixed(2);
+        }
+
+        function setMaxAmount() {
+            const fromW = document.getElementById('fromWallet').value;
+            document.getElementById('transferAmount').value = fromW === 'spot' ? spotBalance : staticFuturesBalance;
+        }
+
+        async function submitTransfer() {
+            const amount = document.getElementById('transferAmount').value;
+            const fromW = document.getElementById('fromWallet').value;
+            const toW = document.getElementById('toWallet').value;
+
+            if(!amount || amount <= 0) return alert("الرجاء إدخال مبلغ صحيح");
+
+            try {
+                document.querySelector('.submit-transfer').innerText = "جاري النقل...";
+                const response = await fetch('/api/transfer/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amount, from_wallet: fromW, to_wallet: toW })
+                });
+                const data = await response.json();
+                
+                if(data.success) {
+                    alert("تم النقل بنجاح!");
+                    location.reload(); 
+                } else {
+                    alert(data.error);
+                    document.querySelector('.submit-transfer').innerText = "تأكيد النقل";
+                }
+            } catch (e) {
+                alert("حدث خطأ في الاتصال.");
+                document.querySelector('.submit-transfer').innerText = "تأكيد النقل";
+            }
+        }
+    </script>
+</body>
+</html>

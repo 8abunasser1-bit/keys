@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إيداع - Wujood Investment</title>
+    <style>
+        body { background-color: #0b0e11; color: #EAECEF; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        .header { padding: 15px; border-bottom: 1px solid #2b3139; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: bold; }
+        .back-btn { color: #EAECEF; text-decoration: none; font-size: 24px; }
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #848e9c; font-size: 14px; }
+        .form-control { width: 100%; padding: 12px; background-color: #1e2329; border: 1px solid #2b3139; color: #EAECEF; border-radius: 8px; outline: none; font-size: 16px; box-sizing: border-box; }
+        .form-control:focus { border-color: #fcd535; }
+        .qr-container { background-color: #1e2329; border-radius: 12px; padding: 20px; text-align: center; margin-top: 20px; border: 1px solid #2b3139; }
+        .qr-code { background: white; padding: 10px; border-radius: 8px; width: 180px; height: 180px; margin: 0 auto 15px; }
+        .address-box { display: flex; background: #2b3139; border-radius: 8px; padding: 10px; align-items: center; justify-content: space-between; }
+        .address-text { font-size: 13px; word-break: break-all; color: #EAECEF; text-align: left; }
+        .copy-btn { background: none; border: none; color: #fcd535; font-weight: bold; cursor: pointer; padding-right: 10px; font-size: 14px; }
+        .network-warning { font-size: 12px; color: #f0b90b; background: rgba(240, 185, 11, 0.1); padding: 10px; border-radius: 8px; margin-top: 15px; text-align: right; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/wallet/" class="back-btn">→</a>
+        إيداع العملات الرقمية
+        <span style="width: 24px;"></span>
+    </div>
+
+    <div class="container">
+        <!-- اختيار العملة -->
+        <div class="form-group">
+            <label>اختر العملة</label>
+            <select id="coinSelect" class="form-control" onchange="updateNetworks()">
+                <option value="" disabled selected>-- اختر العملة --</option>
+                <option value="USDT">Tether (USDT)</option>
+                <option value="BTC">Bitcoin (BTC)</option>
+                <option value="ETH">Ethereum (ETH)</option>
+            </select>
+        </div>
+
+        <!-- اختيار الشبكة -->
+        <div class="form-group" id="networkGroup" style="display:none;">
+            <label>اختر الشبكة (تأكد من مطابقة الشبكة)</label>
+            <select id="networkSelect" class="form-control" onchange="generateAddress()">
+                <!-- الخيارات تتحدث تلقائياً -->
+            </select>
+        </div>
+
+        <!-- عرض العنوان والباركود -->
+        <div id="depositInfo" class="qr-container" style="display:none;">
+            <div class="qr-code">
+                <img id="qrCodeImg" src="" alt="QR Code" style="width:100%; height:100%;">
+            </div>
+            <label style="color:#848e9c; font-size:12px; display:block; margin-bottom:8px; text-align:right;">عنوان الإيداع</label>
+            <div class="address-box">
+                <span id="walletAddress" class="address-text"></span>
+                <button class="copy-btn" onclick="copyAddress()">نسخ</button>
+            </div>
+            
+            <div class="network-warning">
+                ⚠️ <b>ملاحظة هامة:</b> أرسل فقط العملة والشبكة المحددة إلى هذا العنوان. إرسال أي عملات أخرى قد يؤدي إلى فقدانها للأبد.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const networks = {
+            'USDT': [
+                { name: 'Tron (TRC20)', code: 'USDT_TRX' },
+                { name: 'Binance Smart Chain (BEP20)', code: 'USDT_BSC' },
+                { name: 'Ethereum (ERC20)', code: 'USDT_ERC20' }
+            ],
+            'BTC': [
+                { name: 'Bitcoin Network', code: 'BTC' }
+            ],
+            'ETH': [
+                { name: 'Ethereum (ERC20)', code: 'ETH' },
+                { name: 'Binance Smart Chain (BEP20)', code: 'ETH_BSC' }
+            ]
+        };
+
+        function updateNetworks() {
+            const coin = document.getElementById('coinSelect').value;
+            const networkSelect = document.getElementById('networkSelect');
+            const networkGroup = document.getElementById('networkGroup');
+            const depositInfo = document.getElementById('depositInfo');
+            
+            // إخفاء العناوين السابقة
+            depositInfo.style.display = 'none';
+            
+            if (coin) {
+                networkSelect.innerHTML = '<option value="" disabled selected>-- اختر الشبكة --</option>';
+                networks[coin].forEach(net => {
+                    networkSelect.innerHTML += `<option value="${net.code}">${net.name}</option>`;
+                });
+                networkGroup.style.display = 'block';
+            } else {
+                networkGroup.style.display = 'none';
+            }
+        }
+
+        function generateAddress() {
+            const selectedCode = document.getElementById('networkSelect').value;
+            if (!selectedCode) return;
+
+            // إظهار رسالة جاري التحميل
+            document.getElementById('walletAddress').innerText = 'جاري إنشاء العنوان من البوابة...';
+            document.getElementById('depositInfo').style.display = 'block';
+
+            // استدعاء رابط البايثون اللي ربطناه بـ Plisio
+            fetch(`/api/generate_address/?coin=${selectedCode}&amount=100`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('walletAddress').innerText = data.address;
+                        document.getElementById('qrCodeImg').src = data.qr_code;
+                    } else {
+                        alert('عذراً: ' + data.error);
+                        document.getElementById('depositInfo').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ في الاتصال بالخادم.');
+                });
+        }
+
+        function copyAddress() {
+            const addr = document.getElementById('walletAddress').innerText;
+            navigator.clipboard.writeText(addr).then(() => {
+                alert('تم نسخ العنوان بنجاح!');
+            });
+        }
+    </script>
+</body>
+</html>

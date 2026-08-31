@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إيداع الشبكة</title>
+    <style>
+        body { background-color: #0b0e11; color: #eaecef; font-family: -apple-system, sans-serif; margin: 0; padding: 0; }
+        .header { padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid #181a20; }
+        .back-btn { font-size: 1.5em; text-decoration: none; color: #eaecef; margin-left: 20px; }
+        .notice { background-color: #181a20; color: #848e9c; padding: 15px 20px; font-size: 0.85em; line-height: 1.5; border-bottom: 1px solid #2b3139; }
+        .network-item { display: flex; justify-content: space-between; align-items: center; background-color: #181a20; margin: 15px 20px; padding: 15px; border-radius: 12px; text-decoration: none; color: #eaecef; border: 1px solid #2b3139; position: relative; }
+        .network-item:hover { border-color: #f0b90b; }
+        .net-name { font-weight: bold; font-size: 1.1em; display: flex; align-items: center; gap: 10px; }
+        .net-info { color: #848e9c; font-size: 0.8em; margin-top: 5px; }
+        .fast-badge { background-color: rgba(240, 185, 11, 0.15); color: #f0b90b; padding: 3px 8px; border-radius: 5px; font-size: 0.75em; border: 1px solid #f0b90b; margin-bottom: 5px; display: inline-block; }
+        .loading { text-align: center; color: #848e9c; padding: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/deposit/" class="back-btn">→</a>
+        <h3 id="page-title" style="margin: 0; flex-grow: 1; text-align: center; padding-right: 20px;">اختيار الشبكة</h3>
+    </div>
+    
+    <div class="notice">
+        ⚠️ يرجى اختيار نفس الشبكة التي تستخدمها لمنصة السحب لتجنب خسارة الأصول.
+    </div>
+    
+    <div id="network-list">
+        <div class="loading">جاري جلب الشبكات المتاحة...</div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const selectedCoin = urlParams.get('coin') || 'USDT';
+            
+            document.getElementById('page-title').innerText = `إيداع ${selectedCoin}`;
+
+            fetch('/api/currencies/')
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        const netList = document.getElementById('network-list');
+                        netList.innerHTML = '';
+                        
+                        const currencies = data.data;
+                        let targetNetworks = [];
+
+                        for (const [key, info] of Object.entries(currencies)) {
+                            const base = key.split('_')[0]; 
+                            
+                            if (base === selectedCoin) {
+                                info.networks.forEach(net => {
+                                    let displayName = net.network_name || info.name;
+                                    if (key.includes('TRX') || displayName.includes('Tron')) displayName = 'Tron (TRC20)';
+                                    else if (key.includes('BSC') || displayName.includes('BNB') || key.includes('BEP20')) displayName = 'BNB Smart Chain (BEP20)';
+                                    else if (key.includes('ERC20') || displayName.includes('Ethereum')) displayName = 'Ethereum (ERC20)';
+                                    else if (key.includes('TON')) displayName = 'Toncoin (TON)';
+                                    else if (key.includes('SOL')) displayName = 'Solana (SOL)';
+                                    else if (selectedCoin === 'BTC') displayName = 'Bitcoin Network';
+                                    else displayName = displayName + ' Network';
+
+                                    targetNetworks.push({
+                                        code: net.code, 
+                                        network_name: displayName
+                                    });
+                                });
+                            }
+                        }
+
+                        if (targetNetworks.length > 0) {
+                            // --- إضافة نظام الفرز الذكي ---
+                            targetNetworks.sort((a, b) => {
+                                const getPriority = (name) => {
+                                    const lowerName = name.toLowerCase();
+                                    if (lowerName.includes('trc20') || lowerName.includes('tron')) return 1;
+                                    if (lowerName.includes('bep20') || lowerName.includes('bsc')) return 2;
+                                    if (lowerName.includes('erc20') || lowerName.includes('ethereum')) return 3;
+                                    return 99; // باقي الشبكات
+                                };
+                                return getPriority(a.network_name) - getPriority(b.network_name);
+                            });
+
+                            let html = '';
+                            targetNetworks.forEach((net, index) => {
+                                let fastBadge = index === 0 ? '<span class="fast-badge">الأسرع حالياً</span><br>' : '';
+                                
+                                html += `
+                                <a href="/deposit/address/?coin=${net.code}" class="network-item">
+                                    <div>
+                                        ${fastBadge}
+                                        <div class="net-name">${net.network_name}</div>
+                                        <div class="net-info">الوصول المتوقع: ~ 3 دقيقة<br>اعتماد الإيداع: 1 تأكيد</div>
+                                    </div>
+                                    <div style="color: #f0b90b; font-size: 1.2em;">◆</div>
+                                </a>
+                                `;
+                            });
+                            netList.innerHTML = html;
+                        } else {
+                            netList.innerHTML = `<div class="loading" style="color: #ff4d4f;">لا توجد شبكات متاحة لهذه العملة حالياً.</div>`;
+                        }
+                    } else {
+                        netList.innerHTML = `<div class="loading" style="color: #ff4d4f;">خطأ في جلب الشبكات</div>`;
+                    }
+                })
+                .catch(err => {
+                    netList.innerHTML = `<div class="loading" style="color: #ff4d4f;">فشل الاتصال بالخادم</div>`;
+                });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إيداع الكريبتو</title>
+    <style>
+        body { background-color: #0b0e11; color: #eaecef; font-family: -apple-system, sans-serif; margin: 0; padding: 0; }
+        .header { padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid #181a20; }
+        .back-btn { font-size: 1.5em; text-decoration: none; color: #eaecef; margin-left: 20px; }
+        .qr-container { display: flex; justify-content: center; margin: 30px 0 15px; }
+        .qr-box { background: #fff; padding: 10px; border-radius: 10px; }
+        .network-badge { background-color: #2b3139; padding: 5px 15px; border-radius: 15px; font-size: 0.9em; display: inline-block; margin: 0 auto 20px; text-align: center; }
+        .address-box { background-color: #181a20; margin: 0 20px; padding: 5px 5px 5px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2b3139; }
+        .address-text { font-size: 0.9em; word-break: break-all; margin-left: 15px; }
+        .copy-btn { background-color: #4474ff; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .info-row { display: flex; justify-content: space-between; margin: 20px; font-size: 0.85em; color: #848e9c; }
+        .action-btn { background: transparent; border: 1px solid #2b3139; color: #eaecef; width: calc(100% - 40px); margin: 20px; padding: 15px; border-radius: 8px; font-size: 1em; cursor: pointer; transition: 0.3s; }
+        .action-btn:active { background: #2b3139; }
+        .loading { text-align: center; padding: 50px; color: #848e9c; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="javascript:history.back()" class="back-btn">→</a>
+        <h3 style="margin: 0; flex-grow: 1; text-align: center; padding-right: 20px;">إيداع <span id="coin-title">...</span></h3>
+    </div>
+
+    <div id="loading-area" class="loading">جاري توليد عنوان الإيداع...</div>
+
+    <div id="content-area" style="display: none;">
+        <div class="qr-container">
+            <div class="qr-box">
+                <img id="qr-img" src="" alt="QR Code" width="180" height="180">
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <div class="network-badge" id="net-badge">... ▼</div>
+        </div>
+
+        <div class="address-box">
+            <div class="address-text" id="wallet-address">...</div>
+            <button class="copy-btn" id="copy-btn">نسخ</button>
+        </div>
+
+        <div class="info-row" style="margin-top: 30px;">
+            <span>الحد الأدنى للإيداع</span>
+            <span style="color: #eaecef;" id="min-amount">جاري الحساب...</span>
+        </div>
+        <div class="info-row">
+            <span>الوصول المتوقع</span>
+            <span style="color: #eaecef;">1 تأكيد</span>
+        </div>
+
+        <button class="action-btn" id="share-btn">حفظ أو مشاركة العنوان</button>
+    </div>
+
+    <script>
+        // دالة قوية تجبر المتصفح على النسخ حتى بدون HTTPS
+        function forceCopyText(text) {
+            var textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; // عشان ما تتحرك الشاشة
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            var successful = false;
+            try {
+                successful = document.execCommand('copy');
+            } catch (err) {}
+            document.body.removeChild(textArea);
+            return successful;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const coinCode = urlParams.get('coin') || 'USDT_TRX';
+            const baseCoin = coinCode.split('_')[0];
+            
+            document.getElementById('coin-title').innerText = baseCoin;
+            document.getElementById('net-badge').innerText = coinCode + ' ▼';
+
+            fetch(`/api/get_deposit_address/?coin=${coinCode}&amount=100`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        document.getElementById('loading-area').style.display = 'none';
+                        document.getElementById('content-area').style.display = 'block';
+                        
+                        const address = data.address;
+                        document.getElementById('wallet-address').innerText = address;
+                        document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${address}`;
+                        
+                        if(baseCoin === 'BTC') document.getElementById('min-amount').innerText = '0.0001 BTC';
+                        else if(baseCoin === 'ETH') document.getElementById('min-amount').innerText = '0.01 ETH';
+                        else document.getElementById('min-amount').innerText = '1 ' + baseCoin;
+
+                        // برمجة زر النسخ الجديد
+                        document.getElementById('copy-btn').addEventListener('click', function() {
+                            if(forceCopyText(address)) {
+                                const btn = document.getElementById('copy-btn');
+                                btn.innerText = 'تم النسخ ✅';
+                                btn.style.backgroundColor = '#0ecb81';
+                                setTimeout(() => {
+                                    btn.innerText = 'نسخ';
+                                    btn.style.backgroundColor = '#4474ff';
+                                }, 2000);
+                            } else {
+                                alert('فشل النسخ، الرجاء تحديده يدوياً.');
+                            }
+                        });
+
+                        // برمجة زر المشاركة البديل
+                        document.getElementById('share-btn').addEventListener('click', function() {
+                            const shareMsg = `مرحباً، هذا هو عنوان إيداع ${baseCoin} الخاص بي على شبكة ${coinCode}:\n\n${address}`;
+                            
+                            if (navigator.share && window.isSecureContext) {
+                                navigator.share({
+                                    title: 'عنوان إيداع ' + baseCoin,
+                                    text: shareMsg
+                                }).catch(console.error);
+                            } else {
+                                // خطة بديلة: ينسخ الرسالة كاملة ويعطيك تنبيه
+                                if(forceCopyText(shareMsg)) {
+                                    alert('✅ تم نسخ رسالة المشاركة مع العنوان للحافظة.\nيمكنك الآن لصقها في الواتساب أو أي تطبيق آخر.');
+                                }
+                            }
+                        });
+
+                    } else {
+                        document.getElementById('loading-area').innerHTML = `<span style="color: #ff4d4f;">فشل توليد العنوان: ${data.error}</span>`;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('loading-area').innerHTML = `<span style="color: #ff4d4f;">فشل الاتصال بالسيرفر.</span>`;
+                });
+        });
+    </script>
+</body>
+</html>
